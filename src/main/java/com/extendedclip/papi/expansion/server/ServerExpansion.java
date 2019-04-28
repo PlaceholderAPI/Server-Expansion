@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.Cacheable;
+import me.clip.placeholderapi.expansion.Configurable;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.clip.placeholderapi.util.TimeUtil;
 
@@ -36,7 +37,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-public class ServerExpansion extends PlaceholderExpansion implements Cacheable {
+public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 
 	private final Map<String, SimpleDateFormat> dateFormats = new HashMap<String, SimpleDateFormat>();
 	private final int MB = 1048576;
@@ -83,6 +84,15 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable {
 	@Override
 	public String getVersion() {
 		return VERSION;
+	}
+
+	@Override
+	public Map<String, Object> getDefaults() {
+		Map<String, Object> defaults = new HashMap<>();
+		defaults.put("tps_color.high", "&a");
+		defaults.put("tps_color.medium", "&e");
+		defaults.put("tps_color.low", "&c");
+		return defaults;
 	}
 
 	@Override
@@ -244,7 +254,10 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable {
 	}
 
 	private String color(double tps) {
-		return ((tps > 18.0) ? ChatColor.GREEN : (tps > 16.0) ? ChatColor.YELLOW : ChatColor.RED).toString()
+		String low = this.getString("tps_color.low", "&c");
+		String medium = this.getString("tps_color.medium", "&e");
+		String high = this.getString("tps_color.high", "&a");
+		return ChatColor.translateAlternateColorCodes('&', (tps > 18.0) ? high : (tps > 16.0) ? medium : low)
 				+ ((tps > 20.0) ? "*" : "") + fix(tps);
 	}
 
