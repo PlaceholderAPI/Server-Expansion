@@ -45,6 +45,10 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private Object craftServer;
 	private Field tps;
 	private String version;
+	private String serverName = null;
+	private String low = "&c";
+	private String medium = "&e";
+	private String high = "&a";
 
 	private final String VERSION = getClass().getPackage().getImplementationVersion();
 
@@ -56,6 +60,15 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public boolean register() {
+		serverName = this.getString("server_name", "A Minecraft Server");
+		low = this.getString("tps_color.low", "&c");
+		medium = this.getString("tps_color.medium", "&e");
+		high = this.getString("tps_color.high", "&a");
+		return super.register();
 	}
 
 	@Override
@@ -92,13 +105,16 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		defaults.put("tps_color.high", "&a");
 		defaults.put("tps_color.medium", "&e");
 		defaults.put("tps_color.low", "&c");
+		defaults.put("server_name", "A Minecraft Server");
 		return defaults;
 	}
 
 	@Override
-	public String onPlaceholderRequest(Player p, String identifier) {
+	public String onRequest(OfflinePlayer p, String identifier) {
 
 		switch (identifier) {
+		case "name":
+			return serverName == null ? "" : serverName;
 		case "tps":
 			return getTps(null);
 		case "online":
@@ -254,9 +270,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	}
 
 	private String color(double tps) {
-		String low = this.getString("tps_color.low", "&c");
-		String medium = this.getString("tps_color.medium", "&e");
-		String high = this.getString("tps_color.high", "&a");
 		return ChatColor.translateAlternateColorCodes('&', (tps > 18.0) ? high : (tps > 16.0) ? medium : low)
 				+ ((tps > 20.0) ? "*" : "") + fix(tps);
 	}
