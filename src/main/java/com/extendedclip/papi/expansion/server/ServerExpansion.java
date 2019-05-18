@@ -127,7 +127,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		case "has_whitelist":
 			return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		case "version":
-			return Bukkit.getBukkitVersion().substring(0, Bukkit.getBukkitVersion().indexOf("-"));
+			return Bukkit.getBukkitVersion().split("-")[0];
 		}
 
 		if (identifier.startsWith("tps_")) {
