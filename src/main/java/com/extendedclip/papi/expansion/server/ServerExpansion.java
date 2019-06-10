@@ -26,6 +26,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.Cacheable;
 import me.clip.placeholderapi.expansion.Configurable;
@@ -174,7 +176,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 			} else {
 
-				String[] parts = time.split("_");
+				String[] parts = PlaceholderAPI.setBracketPlaceholders(p, time).split("_");
 
 				if (parts.length != 2) {
 					return "invalid format and time";
