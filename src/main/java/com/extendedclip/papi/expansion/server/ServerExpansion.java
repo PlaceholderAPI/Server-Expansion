@@ -272,7 +272,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		if (identifier.equals("total_entities")) {
 			int allEntities = 0;
 			for (final World world : Bukkit.getWorlds()) {
-				allEntities += world.getEntitiesByClasses(LivingEntity.class).size();
+				allEntities += world.getEntities().size();
 			}
 			return Integer.toString(allEntities);
 		}
