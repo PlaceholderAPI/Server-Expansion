@@ -253,7 +253,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			}
 		}
 
-		if(identifier.equals("total_chunks")) {
+		if (identifier.equals("total_chunks")) {
 			int loadedChunks = 0;
 			for (final World world : Bukkit.getWorlds()) {
 				loadedChunks += world.getLoadedChunks().length;
@@ -261,7 +261,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			return Integer.toString(loadedChunks);
 		}
 
-		if(identifier.equals("total_living_entities")) {
+		if (identifier.equals("total_living_entities")) {
 			int livingEntities = 0;
 			for (final World world : Bukkit.getWorlds()) {
 				livingEntities += world.getEntitiesByClasses(LivingEntity.class).size();
@@ -269,7 +269,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			return Integer.toString(livingEntities);
 		}
 
-		if(identifier.equals("total_entities")) {
+		if (identifier.equals("total_entities")) {
 			int allEntities = 0;
 			for (final World world : Bukkit.getWorlds()) {
 				allEntities += world.getEntitiesByClasses(LivingEntity.class).size();
