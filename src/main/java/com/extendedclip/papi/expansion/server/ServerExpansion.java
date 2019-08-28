@@ -253,28 +253,31 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			}
 		}
 
-		if (identifier.equals("total_chunks")) {
-			int loadedChunks = 0;
-			for (final World world : Bukkit.getWorlds()) {
-				loadedChunks += world.getLoadedChunks().length;
-			}
-			return Integer.toString(loadedChunks);
-		}
+		if (identifier.startsWith("total_")) {
 
-		if (identifier.equals("total_living_entities")) {
-			int livingEntities = 0;
-			for (final World world : Bukkit.getWorlds()) {
-				livingEntities += world.getEntitiesByClasses(LivingEntity.class).size();
+			if (identifier.equals("chunks")) {
+				int loadedChunks = 0;
+				for (final World world : Bukkit.getWorlds()) {
+					loadedChunks += world.getLoadedChunks().length;
+				}
+				return Integer.toString(loadedChunks);
 			}
-			return Integer.toString(livingEntities);
-		}
 
-		if (identifier.equals("total_entities")) {
-			int allEntities = 0;
-			for (final World world : Bukkit.getWorlds()) {
-				allEntities += world.getEntities().size();
+			if (identifier.equals("living_entities")) {
+				int livingEntities = 0;
+				for (final World world : Bukkit.getWorlds()) {
+					livingEntities += world.getEntitiesByClasses(LivingEntity.class).size();
+				}
+				return Integer.toString(livingEntities);
 			}
-			return Integer.toString(allEntities);
+
+			if (identifier.equals("entities")) {
+				int allEntities = 0;
+				for (final World world : Bukkit.getWorlds()) {
+					allEntities += world.getEntities().size();
+				}
+				return Integer.toString(allEntities);
+			}
 		}
 		
 		return null;
