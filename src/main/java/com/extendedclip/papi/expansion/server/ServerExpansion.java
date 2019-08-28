@@ -36,6 +36,8 @@ import me.clip.placeholderapi.util.TimeUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
@@ -130,6 +132,32 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		case "version":
 			return Bukkit.getBukkitVersion().split("-")[0];
+		case "ram_used":
+			return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
+		case "ram_free":
+			return String.valueOf(runtime.freeMemory() / MB);
+		case "ram_total":
+			return String.valueOf(runtime.totalMemory() / MB);
+		case "ram_max":
+			return String.valueOf(runtime.maxMemory() / MB);
+		case "total_chunks":
+			int loadedChunks = 0;
+			for (final World world : Bukkit.getWorlds()) {
+				loadedChunks += world.getLoadedChunks().length;
+			}
+			return Integer.toString(loadedChunks);
+		case "total_living_entities":
+			int livingEntities = 0;
+			for (final World world : Bukkit.getWorlds()) {
+				livingEntities += world.getEntitiesByClasses(LivingEntity.class).size();
+			}
+			return Integer.toString(livingEntities);
+		case "total_entities":
+			int allEntities = 0;
+			for (final World world : Bukkit.getWorlds()) {
+				allEntities += world.getEntities().size();
+			}
+			return Integer.toString(allEntities);
 		}
 
 		if (identifier.startsWith("tps_")) {
@@ -231,52 +259,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 				return format.format(new Date());
 			} catch (NullPointerException | IllegalArgumentException ex) {
 				return null;
-			}
-		}
-
-		if (identifier.startsWith("ram_")) {
-
-			if (identifier.equals("ram_used")) {
-				return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
-			}
-
-			if (identifier.equals("ram_free")) {
-				return String.valueOf(runtime.freeMemory() / MB);
-			}
-
-			if (identifier.equals("ram_total")) {
-				return String.valueOf(runtime.totalMemory() / MB);
-			}
-
-			if (identifier.equals("ram_max")) {
-				return String.valueOf(runtime.maxMemory() / MB);
-			}
-		}
-
-		if (identifier.startsWith("total_")) {
-
-			if (identifier.equals("total_chunks")) {
-				int loadedChunks = 0;
-				for (final World world : Bukkit.getWorlds()) {
-					loadedChunks += world.getLoadedChunks().length;
-				}
-				return Integer.toString(loadedChunks);
-			}
-
-			if (identifier.equals("total_living_entities")) {
-				int livingEntities = 0;
-				for (final World world : Bukkit.getWorlds()) {
-					livingEntities += world.getEntitiesByClasses(LivingEntity.class).size();
-				}
-				return Integer.toString(livingEntities);
-			}
-
-			if (identifier.equals("total_entities")) {
-				int allEntities = 0;
-				for (final World world : Bukkit.getWorlds()) {
-					allEntities += world.getEntities().size();
-				}
-				return Integer.toString(allEntities);
 			}
 		}
 		
