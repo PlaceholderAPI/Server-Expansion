@@ -29,6 +29,16 @@
           <artifactId>PlaceholderAPI</artifactId>
           <version>LATEST</version>
          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>me.rayzr522</groupId>
+              <artifactId>jsonmessage</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.bstats</groupId>
+              <artifactId>bstats-bukkit</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
     </dependencies>
     
