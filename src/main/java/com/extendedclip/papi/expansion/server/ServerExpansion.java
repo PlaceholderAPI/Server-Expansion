@@ -20,6 +20,7 @@
  */
 package com.extendedclip.papi.expansion.server;
 
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -88,11 +89,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	}
 
 	@Override
-	public String getPlugin() {
-		return null;
-	}
-
-	@Override
 	public String getAuthor() {
 		return "clip";
 	}
@@ -127,7 +123,8 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		case "unique_joins":
 			return String.valueOf(Bukkit.getOfflinePlayers().length);
 		case "uptime":
-			return getPlaceholderAPI().getUptime();
+			long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getStartTime());
+			return TimeUtil.getTime((int)seconds);
 		case "has_whitelist":
 			return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		case "version":
