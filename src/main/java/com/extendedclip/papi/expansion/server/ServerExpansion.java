@@ -67,12 +67,12 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	}
 
 	@Override
-	public boolean register() {
+	public boolean canRegister() {
 		serverName = this.getString("server_name", "A Minecraft Server");
 		low = this.getString("tps_color.low", "&c");
 		medium = this.getString("tps_color.medium", "&e");
 		high = this.getString("tps_color.high", "&a");
-		return super.register();
+		return true;
 	}
 
 	@Override
