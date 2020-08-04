@@ -123,7 +123,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		case "unique_joins":
 			return String.valueOf(Bukkit.getOfflinePlayers().length);
 		case "uptime":
-			long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getStartTime());
+			long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
 			return TimeUtil.getTime((int)seconds);
 		case "has_whitelist":
 			return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
