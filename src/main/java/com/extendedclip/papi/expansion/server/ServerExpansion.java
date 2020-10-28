@@ -20,6 +20,18 @@
  */
 package com.extendedclip.papi.expansion.server;
 
+import me.clip.placeholderapi.PlaceholderAPI;
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import me.clip.placeholderapi.expansion.Cacheable;
+import me.clip.placeholderapi.expansion.Configurable;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
@@ -30,22 +42,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import me.clip.placeholderapi.PlaceholderAPI;
-import me.clip.placeholderapi.PlaceholderAPIPlugin;
-import me.clip.placeholderapi.expansion.Cacheable;
-import me.clip.placeholderapi.expansion.Configurable;
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.clip.placeholderapi.util.TimeUtil;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 
-	private final Map<String, SimpleDateFormat> dateFormats = new HashMap<String, SimpleDateFormat>();
+	private final Map<String, SimpleDateFormat> dateFormats = new HashMap<>();
 	private final int MB = 1048576;
 	private final Runtime runtime = Runtime.getRuntime();
 	private Object craftServer;
@@ -102,7 +101,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 	@Override
 	public Map<String, Object> getDefaults() {
-		Map<String, Object> defaults = new HashMap<>();
+		final Map<String, Object> defaults = new HashMap<>();
 		defaults.put("tps_color.high", "&a");
 		defaults.put("tps_color.medium", "&e");
 		defaults.put("tps_color.low", "&c");
@@ -260,7 +259,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 				return null;
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -316,7 +315,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		}
 		return null;
 	}
-	
+
 	/**
 	 * @author Sxtanna
 	 */
