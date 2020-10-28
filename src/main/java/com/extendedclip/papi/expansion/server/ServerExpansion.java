@@ -199,7 +199,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 					return "0";
 				}
 
-				return TimeUtil.getTime((int) TimeUnit.MILLISECONDS.toSeconds(between));
+				return formatTime(Duration.of((int) TimeUnit.MILLISECONDS.toSeconds(between), ChronoUnit.SECONDS));
 
 			} else {
 
@@ -237,7 +237,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 					return "0";
 				}
 
-				return TimeUtil.getTime((int) TimeUnit.MILLISECONDS.toSeconds(between));
+				return formatTime(Duration.of((int) TimeUnit.MILLISECONDS.toSeconds(between), ChronoUnit.SECONDS));
 
 			}
 		}
