@@ -23,6 +23,8 @@ package com.extendedclip.papi.expansion.server;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -124,7 +126,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			return String.valueOf(Bukkit.getOfflinePlayers().length);
 		case "uptime":
 			long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
-			return TimeUtil.getTime((int)seconds);
+			return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
 		case "has_whitelist":
 			return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		case "version":
@@ -197,7 +199,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 					return "0";
 				}
 
-				return TimeUtil.getTime((int) TimeUnit.MILLISECONDS.toSeconds(between));
+				return formatTime(Duration.of((int) TimeUnit.MILLISECONDS.toSeconds(between), ChronoUnit.SECONDS));
 
 			} else {
 
@@ -235,7 +237,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 					return "0";
 				}
 
-				return TimeUtil.getTime((int) TimeUnit.MILLISECONDS.toSeconds(between));
+				return formatTime(Duration.of((int) TimeUnit.MILLISECONDS.toSeconds(between), ChronoUnit.SECONDS));
 
 			}
 		}
@@ -313,6 +315,62 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			return color(tps()[2]);
 		}
 		return null;
+	}
+	
+	/**
+	 * @author Sxtanna
+	 */
+	public static String formatTime(final Duration duration) {
+		final StringBuilder builder = new StringBuilder();
+
+		long seconds = duration.getSeconds();
+		long minutes = seconds / 60;
+		long hours = minutes / 60;
+		long days = hours / 24;
+		final long weeks = days / 7;
+
+		seconds %= 60;
+		minutes %= 60;
+		hours %= 24;
+		days %= 7;
+
+		if (seconds > 0) {
+			builder.insert(0, seconds + "s");
+		}
+
+		if (minutes > 0) {
+			if (builder.length() > 0) {
+				builder.insert(0, ' ');
+			}
+
+			builder.insert(0, minutes + "m");
+		}
+
+		if (hours > 0) {
+			if (builder.length() > 0) {
+				builder.insert(0, ' ');
+			}
+
+			builder.insert(0, hours + "h");
+		}
+
+		if (days > 0) {
+			if (builder.length() > 0) {
+				builder.insert(0, ' ');
+			}
+
+			builder.insert(0, days + "d");
+		}
+
+		if (weeks > 0) {
+			if (builder.length() > 0) {
+				builder.insert(0, ' ');
+			}
+
+			builder.insert(0, weeks + "w");
+		}
+
+		return builder.toString();
 	}
 
 }
