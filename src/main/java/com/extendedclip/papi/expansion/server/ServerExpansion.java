@@ -54,6 +54,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private String low = "&c";
 	private String medium = "&e";
 	private String high = "&a";
+	private String variant;
 
 	private final String VERSION = getClass().getPackage().getImplementationVersion();
 
@@ -62,6 +63,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 			craftServer = Class.forName("net.minecraft.server." + version + ".MinecraftServer").getMethod("getServer").invoke(null);
 			tps = craftServer.getClass().getField("recentTps");
+			variant = initializeVariant();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -99,6 +101,30 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		return VERSION;
 	}
 
+	public String initializeVariant() {
+		try {
+			Class.forName("net.pl3x.purpur.PurpurConfig");
+			return "Purpur";
+		} catch (ClassNotFoundException e) {
+			try {
+				Class.forName("com.tuinity.tuinity.config.TuinityConfig");
+				return "Tuinity";
+			} catch (ClassNotFoundException e1) {
+				try {
+					Class.forName("com.destroystokyo.paper.PaperConfig");
+					return "Paper";
+				} catch (ClassNotFoundException e2) {
+					try {
+						Class.forName("org.spigotmc.SpigotConfig");
+						return "Spigot";
+					} catch (ClassNotFoundException e3) {
+						return "Unknown";
+					}
+				}
+			}
+		}
+	}
+
 	@Override
 	public Map<String, Object> getDefaults() {
 		final Map<String, Object> defaults = new HashMap<>();
@@ -115,6 +141,8 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		switch (identifier) {
 		case "name":
 			return serverName == null ? "" : serverName;
+		case "variant":
+			return variant;
 		case "tps":
 			return getTps(null);
 		case "online":
