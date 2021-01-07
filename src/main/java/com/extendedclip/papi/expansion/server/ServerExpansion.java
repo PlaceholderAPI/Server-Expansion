@@ -20,6 +20,8 @@
  */
 package com.extendedclip.papi.expansion.server;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.Cacheable;
@@ -29,8 +31,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -45,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 
 	private final Map<String, SimpleDateFormat> dateFormats = new HashMap<>();
-	private final int MB = 1048576;
 	private final Runtime runtime = Runtime.getRuntime();
 	private Object craftServer;
 	private Field tps;
@@ -55,6 +56,10 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private String medium = "&e";
 	private String high = "&a";
 	private String variant;
+	
+	private final Cache<String, Integer> cache = Caffeine.newBuilder()
+			.expireAfterWrite(1, TimeUnit.MINUTES)
+			.build();
 
 	private final String VERSION = getClass().getPackage().getImplementationVersion();
 
@@ -84,20 +89,22 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		tps = null;
 		version = null;
 		dateFormats.clear();
+		
+		cache.invalidateAll();
 	}
 
 	@Override
-	public String getIdentifier() {
+	public @NotNull String getIdentifier() {
 		return "server";
 	}
 
 	@Override
-	public String getAuthor() {
+	public @NotNull String getAuthor() {
 		return "clip";
 	}
 
 	@Override
-	public String getVersion() {
+	public @NotNull String getVersion() {
 		return VERSION;
 	}
 
@@ -137,53 +144,42 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 	@Override
 	public String onRequest(OfflinePlayer p, String identifier) {
+		final int MB = 1048576;
 
 		switch (identifier) {
-		case "name":
-			return serverName == null ? "" : serverName;
-		case "variant":
-			return variant;
-		case "tps":
-			return getTps(null);
-		case "online":
-			return String.valueOf(Bukkit.getOnlinePlayers().size());
-		case "max_players":
-			return String.valueOf(Bukkit.getMaxPlayers());
-		case "unique_joins":
-			return String.valueOf(Bukkit.getOfflinePlayers().length);
-		case "uptime":
-			long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
-			return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
-		case "has_whitelist":
-			return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
-		case "version":
-			return Bukkit.getBukkitVersion().split("-")[0];
-		case "ram_used":
-			return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
-		case "ram_free":
-			return String.valueOf(runtime.freeMemory() / MB);
-		case "ram_total":
-			return String.valueOf(runtime.totalMemory() / MB);
-		case "ram_max":
-			return String.valueOf(runtime.maxMemory() / MB);
-		case "total_chunks":
-			int loadedChunks = 0;
-			for (final World world : Bukkit.getWorlds()) {
-				loadedChunks += world.getLoadedChunks().length;
-			}
-			return Integer.toString(loadedChunks);
-		case "total_living_entities":
-			int livingEntities = 0;
-			for (final World world : Bukkit.getWorlds()) {
-				livingEntities += world.getEntitiesByClasses(LivingEntity.class).size();
-			}
-			return Integer.toString(livingEntities);
-		case "total_entities":
-			int allEntities = 0;
-			for (final World world : Bukkit.getWorlds()) {
-				allEntities += world.getEntities().size();
-			}
-			return Integer.toString(allEntities);
+			case "name":
+				return serverName == null ? "" : serverName;
+			case "variant":
+				return variant;
+			case "tps":
+				return getTps(null);
+			case "online":
+				return String.valueOf(Bukkit.getOnlinePlayers().size());
+			case "max_players":
+				return String.valueOf(Bukkit.getMaxPlayers());
+			case "unique_joins":
+				return String.valueOf(Bukkit.getOfflinePlayers().length);
+			case "uptime":
+				long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
+				return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
+			case "has_whitelist":
+				return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
+			case "version":
+				return Bukkit.getBukkitVersion().split("-")[0];
+			case "ram_used":
+				return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
+			case "ram_free":
+				return String.valueOf(runtime.freeMemory() / MB);
+			case "ram_total":
+				return String.valueOf(runtime.totalMemory() / MB);
+			case "ram_max":
+				return String.valueOf(runtime.maxMemory() / MB);
+			case "total_chunks":
+				return String.valueOf(cache.get("chunks", k -> getChunks()));
+			case "total_living_entities":
+				return String.valueOf(cache.get("livingEntities", k -> getLivingEntities()));
+			case "total_entities":
+				return String.valueOf(cache.get("totalEntities", k -> getTotalEntities()));
 		}
 
 		if (identifier.startsWith("tps_")) {
@@ -208,9 +204,9 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		if (identifier.startsWith("countdown_")) {
 			String time = identifier.replace("countdown_", "");
 
-			if (time.indexOf("_") == -1) {
+			if (!time.contains("_")) {
 
-				Date then = null;
+				Date then;
 
 				try {
 					then = PlaceholderAPIPlugin.getDateFormat().parse(time);
@@ -240,7 +236,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 				String format = parts[0];
 
-				SimpleDateFormat f = null;
+				SimpleDateFormat f;
 
 				try {
 					f = new SimpleDateFormat(format);
@@ -248,7 +244,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 					return "invalid date format";
 				}
 
-				Date then = null;
+				Date then;
 
 				try {
 					then = f.parse(time);
@@ -291,55 +287,61 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		return null;
 	}
 
-	private double[] tps() {
-		if (version == null || craftServer == null || tps == null) {
-			return new double[] { 0, 0, 0 };
-		}
-		try {
-			return ((double[]) tps.get(craftServer));
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		}
-		return new double[] { 0, 0, 0 };
-	}
-
-	private double fix(double tps) {
-		return Math.min(Math.round(tps * 100.0) / 100.0, 20.0);
-	}
-
-	private String color(double tps) {
-		return ChatColor.translateAlternateColorCodes('&', (tps > 18.0) ? high : (tps > 16.0) ? medium : low)
-				+ ((tps > 20.0) ? "*" : "") + fix(tps);
-	}
-
 	public String getTps(String arg) {
 		if (arg == null || arg.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			for (double t : tps()) {
-				sb.append(color(t));
-				sb.append(", ");
+				sb.append(getColoredTps(t))
+				  .append(ChatColor.GRAY)
+				  .append(", ");
 			}
 			return sb.toString();
 		}
-		switch (arg) {
-		case "1":
-		case "one":
+		switch (arg) { 
+			case "1":
+			case "one":
 			return String.valueOf(fix(tps()[0]));
-		case "5":
-		case "five":
-			return String.valueOf(fix(tps()[1]));
-		case "15":
-		case "fifteen":
-			return String.valueOf(tps()[2]);
-		case "1_colored":
-		case "one_colored":
-			return color(tps()[0]);
-		case "5_colored":
-		case "five_colored":
-			return color(tps()[1]);
-		case "15_colored":
-		case "fifteen_colored":
-			return color(tps()[2]);
+			case "5":
+			case "five":
+				return String.valueOf(fix(tps()[1]));
+			case "15":
+			case "fifteen":
+				return String.valueOf(tps()[2]);
+			case "1_colored":
+			case "one_colored":
+				return getColoredTps(tps()[0]);
+			case "5_colored":
+			case "five_colored":
+				return getColoredTps(tps()[1]);
+			case "15_colored":
+			case "fifteen_colored":
+				return getColoredTps(tps()[2]);
+			case "percent":
+				StringBuilder sb = new StringBuilder();
+				for (double t : tps()) {
+					sb.append(getColoredTpsPercent(t))
+					  .append(ChatColor.GRAY)
+					  .append(", ");
+				}
+				return sb.toString();
+			case "1_percent":
+			case "one_percent":
+				return getPercent(tps()[0]);
+			case "5_percent":
+			case "five_percent":
+				return getPercent(tps()[1]);
+			case "15_percent":
+			case "fifteen_percent":
+				return getPercent(tps()[2]);
+			case "1_percent_colored":
+			case "one_percent_colored":
+				return getColoredTpsPercent(tps()[0]);
+			case "5_percent_colored":
+			case "five_percent_colored":
+				return getColoredTpsPercent(tps()[1]);
+			case "15_percent_colored":
+			case "fifteen_percent_colored":
+				return getColoredTpsPercent(tps()[2]);
 		}
 		return null;
 	}
@@ -398,6 +400,66 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		}
 
 		return builder.toString();
+	}
+	
+	private double[] tps() {
+		if (version == null || craftServer == null || tps == null) {
+			return new double[] { 0, 0, 0 };
+		}
+		try {
+			return ((double[]) tps.get(craftServer));
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return new double[] { 0, 0, 0 };
+	}
+	
+	private double fix(double tps) {
+		return Math.min(Math.round(tps * 100.0) / 100.0, 20.0);
+	}
+	
+	private String color(double tps) {
+		return ChatColor.translateAlternateColorCodes('&', (tps > 18.0) ? high : (tps > 16.0) ? medium : low)
+				+ ((tps > 20.0) ? "*" : "");
+	}
+	
+	private String getColoredTps(double tps) {
+		return color(tps) + fix(tps);
+	}
+	
+	private String getColoredTpsPercent(double tps){
+		return color(tps) + getPercent(tps);
+	}
+	
+	private Integer getChunks(){
+		int loadedChunks = 0;
+		for (final World world : Bukkit.getWorlds()) {
+			loadedChunks += world.getLoadedChunks().length;
+		}
+		
+		return loadedChunks;
+	}
+	
+	private Integer getLivingEntities(){
+		int livingEntities = 0;
+		for (final World world : Bukkit.getWorlds()) {
+			livingEntities += world.getLivingEntities().size();
+		}
+		
+		return livingEntities;
+	}
+	
+	private Integer getTotalEntities(){
+		int allEntities = 0;
+		for (World world : Bukkit.getWorlds()) {
+			allEntities += world.getEntities().size();
+		}
+		
+		return allEntities;
+	}
+	
+	private String getPercent(double tps){
+		return Math.min(Math.round(100 / 20.0 * tps), 100.0) + "%";
 	}
 
 }
