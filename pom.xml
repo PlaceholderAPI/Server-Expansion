@@ -5,29 +5,33 @@
   <version>2.5.0</version>
   <name>PAPI-Expansion-Server</name>
   <description>PlaceholderAPI expansion for server placeholders</description>
-    
+
     <repositories>
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
         <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+        <repository>
             <id>placeholderapi</id>
-            <url>https://repo.extendedclip.com/content/repositories/dev/</url>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
     </repositories>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.16.4-R0.1-SNAPSHOT</version>
+            <version>1.17-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
          <groupId>me.clip</groupId>
           <artifactId>PlaceholderAPI</artifactId>
-          <version>LATEST</version>
+          <version>2.10.9</version>
          <scope>provided</scope>
           <exclusions>
             <exclusion>
@@ -41,8 +45,8 @@
           </exclusions>
         </dependency>
     </dependencies>
-    
-    <build>     
+
+    <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
