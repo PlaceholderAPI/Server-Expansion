@@ -41,6 +41,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 
@@ -61,7 +63,11 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	public ServerExpansion() {
 		try {
 			version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-			craftServer = Class.forName("net.minecraft.server." + version + ".MinecraftServer").getMethod("getServer").invoke(null);
+			if (minecraftVersion() >= 17) {
+				craftServer = Class.forName("net.minecraft.server.MinecraftServer").getMethod("getServer").invoke(null);
+			} else {
+				craftServer = Class.forName("net.minecraft.server." + version + ".MinecraftServer").getMethod("getServer").invoke(null);
+			}
 			tps = craftServer.getClass().getField("recentTps");
 			variant = initializeVariant();
 		} catch (Exception e) {
@@ -398,6 +404,26 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		}
 
 		return builder.toString();
+	}
+
+	/**
+	 * Helper method to return the major version that the server is running.
+	 *
+	 * This is needed because in 1.17, NMS is no longer versioned.
+	 *
+	 * @return the major version of Minecraft the server is running
+	 */
+	public static int minecraftVersion() {
+		try {
+			final Matcher matcher = Pattern.compile("\\(MC: (\\d)\\.(\\d+)\\.?(\\d+?)?\\)").matcher(Bukkit.getVersion());
+			if (matcher.find()) {
+				return Integer.parseInt(matcher.toMatchResult().group(2), 10);
+			} else {
+				throw new IllegalArgumentException(String.format("No match found in '%s'", Bukkit.getVersion()));
+			}
+		} catch (final IllegalArgumentException ex) {
+			throw new RuntimeException("Failed to determine Minecraft version", ex);
+		}
 	}
 
 }
