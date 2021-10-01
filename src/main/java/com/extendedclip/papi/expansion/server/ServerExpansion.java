@@ -42,6 +42,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,11 +54,14 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private Object craftServer;
 	private Field tps;
 	private String version;
-	private String serverName = null;
+	private final String variant;
+
+	// config stuff
+	private String serverName;
 	private String low = "&c";
 	private String medium = "&e";
 	private String high = "&a";
-	private String variant;
+	// -----
 	
 	private final Cache<String, Integer> cache = Caffeine.newBuilder()
 			.expireAfterWrite(1, TimeUnit.MINUTES)
@@ -66,18 +70,20 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private final String VERSION = getClass().getPackage().getImplementationVersion();
 
 	public ServerExpansion() {
+		this.version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+
 		try {
-			version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 			if (minecraftVersion() >= 17) {
 				craftServer = Class.forName("net.minecraft.server.MinecraftServer").getMethod("getServer").invoke(null);
 			} else {
 				craftServer = Class.forName("net.minecraft.server." + version + ".MinecraftServer").getMethod("getServer").invoke(null);
 			}
 			tps = craftServer.getClass().getField("recentTps");
-			variant = initializeVariant();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		this.variant = ServerUtils.getServerVariant();
 	}
 
 	@Override
@@ -114,30 +120,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		return VERSION;
 	}
 
-	public String initializeVariant() {
-		try {
-			Class.forName("net.pl3x.purpur.PurpurConfig");
-			return "Purpur";
-		} catch (ClassNotFoundException e) {
-			try {
-				Class.forName("com.tuinity.tuinity.config.TuinityConfig");
-				return "Tuinity";
-			} catch (ClassNotFoundException e1) {
-				try {
-					Class.forName("com.destroystokyo.paper.PaperConfig");
-					return "Paper";
-				} catch (ClassNotFoundException e2) {
-					try {
-						Class.forName("org.spigotmc.SpigotConfig");
-						return "Spigot";
-					} catch (ClassNotFoundException e3) {
-						return "Unknown";
-					}
-				}
-			}
-		}
-	}
-
 	@Override
 	public Map<String, Object> getDefaults() {
 		final Map<String, Object> defaults = new HashMap<>();
@@ -153,25 +135,25 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		final int MB = 1048576;
 
 		switch (identifier) {
-			case "name":
-				return serverName == null ? "" : serverName;
-			case "variant":
-				return variant;
-			case "tps":
-				return getTps(null);
+			// Players placeholders
 			case "online":
 				return String.valueOf(Bukkit.getOnlinePlayers().size());
 			case "max_players":
 				return String.valueOf(Bukkit.getMaxPlayers());
 			case "unique_joins":
 				return String.valueOf(Bukkit.getOfflinePlayers().length);
-			case "uptime":
-				long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
-				return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
-			case "has_whitelist":
-				return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
+			// -----
+
+			// Version placeholders
 			case "version":
-				return Bukkit.getBukkitVersion().split("-")[0];
+				return ServerUtils.VERSION;
+			case "build":
+				return ServerUtils.BUILD;
+			case "version_build":
+				return ServerUtils.VERSION + '-' + ServerUtils.BUILD;
+			// -----
+
+			// Ram placeholders
 			case "ram_used":
 				return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
 			case "ram_free":
@@ -180,12 +162,29 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 				return String.valueOf(runtime.totalMemory() / MB);
 			case "ram_max":
 				return String.valueOf(runtime.maxMemory() / MB);
+			// -----
+
+			// Identity placeholders
+			case "name":
+				return serverName == null ? "" : serverName;
+			case "variant":
+				return variant;
+			// -----
+
+			// Other placeholders
+			case "tps":
+				return getTps(null);
+			case "uptime":
+				long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
+				return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
 			case "total_chunks":
 				return String.valueOf(cache.get("chunks", k -> getChunks()));
 			case "total_living_entities":
 				return String.valueOf(cache.get("livingEntities", k -> getLivingEntities()));
 			case "total_entities":
 				return String.valueOf(cache.get("totalEntities", k -> getTotalEntities()));
+			case "has_whitelist":
+				return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		}
 
 		if (identifier.startsWith("tps_")) {
@@ -322,14 +321,15 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			case "15_colored":
 			case "fifteen_colored":
 				return getColoredTps(tps()[2]);
-			case "percent":
-				StringBuilder sb = new StringBuilder();
+			case "percent": {
+				final StringJoiner joiner = new StringJoiner(ChatColor.GRAY + ", ");
+
 				for (double t : tps()) {
-					sb.append(getColoredTpsPercent(t))
-					  .append(ChatColor.GRAY)
-					  .append(", ");
+					joiner.add(getColoredTpsPercent(t));
 				}
-				return sb.toString();
+
+				return joiner.toString();
+			}
 			case "1_percent":
 			case "one_percent":
 				return getPercent(tps()[0]);
