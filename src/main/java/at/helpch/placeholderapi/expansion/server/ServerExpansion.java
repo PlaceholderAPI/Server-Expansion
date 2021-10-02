@@ -7,6 +7,8 @@ import at.helpch.placeholderapi.api.expansion.placeholder.Placeholder;
 import at.helpch.placeholderapi.api.expansion.placeholder.PlaceholderContext;
 import at.helpch.placeholderapi.api.server.Server;
 import at.helpch.placeholderapi.api.server.keyable.key.ServerKeys;
+import at.helpch.placeholderapi.expansion.time.TimeFormatter;
+import at.helpch.placeholderapi.expansion.time.file.Config;
 import com.google.inject.Inject;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +41,7 @@ public final class ServerExpansion extends Expansion {
         this.server = server;
         this.config = config;
 
+        // TODO: instantiate a single TimeFormatter through out the project, with a main config
         this.timeFormatter = new TimeFormatter(config);
     }
 
@@ -48,10 +51,11 @@ public final class ServerExpansion extends Expansion {
     }
 
     private void register() {
+        server("name", server -> this.config.getServerName().orElse("A Minecraft Server"));
         server("online", server -> server.get(ServerKeys.PLAYERS).orElse(Collections.emptySet()).size());
+        server("version", server1 -> server.get(ServerKeys.VERSION));
         server("max_players", server -> server.get(ServerKeys.MAX_PLAYERS));
-        server("unique_joins", server -> server.get(ServerKeys.OFFLINE_PLAYERS).orElse(Collections.emptySet().size()));
-        server("version", server -> server.get(ServerKeys.VERSION));
+        server("unique_joins", server -> server.get(ServerKeys.OFFLINE_PLAYERS).orElse(0));
         server("uptime", server -> timeFormatter.format(Duration.ofSeconds(TimeUnit.MILLISECONDS.toSeconds(server.get(ServerKeys.UPTIME).orElse(0L)))));
         server("has_whitelist", server -> server.get(ServerKeys.WHITELISTED));
     }
@@ -164,7 +168,7 @@ public final class ServerExpansion extends Expansion {
     private String color(final double tps) {
         final Config.TpsColor color = config.getTpsColor();
 
-        return tps > 18.0 ? color.getHigh() : (tps > 16.0 ? color.getMedium() : color.getLow()) + (tps > 20.0 ? "*" : "") + fix(tps);
+        return tps > 18.0 ? color.getHigh() : (tps > 16.0 ? color.getMedium() : color.getLow()) + "" + fix(tps);
     }
 
     @Placeholder("ram")
@@ -186,4 +190,3 @@ public final class ServerExpansion extends Expansion {
     }
 
 }
-
