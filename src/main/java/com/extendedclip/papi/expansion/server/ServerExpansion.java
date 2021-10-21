@@ -35,7 +35,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -44,16 +43,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
-
+	
+	private final ServerUtils serverUtils;
+	
 	private final Map<String, SimpleDateFormat> dateFormats = new HashMap<>();
 	private final Runtime runtime = Runtime.getRuntime();
-	private Object craftServer;
-	private Field tps;
-	private String version;
 	private final String variant;
 
 	// config stuff
@@ -70,20 +66,9 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private final String VERSION = getClass().getPackage().getImplementationVersion();
 
 	public ServerExpansion() {
-		this.version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+		this.serverUtils = new ServerUtils();
 
-		try {
-			if (minecraftVersion() >= 17) {
-				craftServer = Class.forName("net.minecraft.server.MinecraftServer").getMethod("getServer").invoke(null);
-			} else {
-				craftServer = Class.forName("net.minecraft.server." + version + ".MinecraftServer").getMethod("getServer").invoke(null);
-			}
-			tps = craftServer.getClass().getField("recentTps");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		this.variant = ServerUtils.getServerVariant();
+		this.variant = serverUtils.getServerVariant();
 	}
 
 	@Override
@@ -97,9 +82,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 	@Override
 	public void clear() {
-		craftServer = null;
-		tps = null;
-		version = null;
+		serverUtils.clear();
 		dateFormats.clear();
 		
 		cache.invalidateAll();
@@ -146,12 +129,12 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 			// Version placeholders
 			case "version":
-				return ServerUtils.VERSION;
+				return serverUtils.getVersion();
 			case "build":
-				return ServerUtils.BUILD;
+				return serverUtils.getBuild();
 			case "version_build":
 			case "version_full":
-				return ServerUtils.VERSION + '-' + ServerUtils.BUILD;
+				return serverUtils.getVersion() + '-' + serverUtils.getBuild();
 			// -----
 
 			// Ram placeholders
@@ -296,7 +279,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	public String getTps(String arg) {
 		if (arg == null || arg.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
-			for (double t : tps()) {
+			for (double t : serverUtils.getTps()) {
 				sb.append(getColoredTps(t))
 				  .append(ChatColor.GRAY)
 				  .append(", ");
@@ -306,26 +289,26 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		switch (arg) { 
 			case "1":
 			case "one":
-			return String.valueOf(fix(tps()[0]));
+			return String.valueOf(fix(serverUtils.getTps()[0]));
 			case "5":
 			case "five":
-				return String.valueOf(fix(tps()[1]));
+				return String.valueOf(fix(serverUtils.getTps()[1]));
 			case "15":
 			case "fifteen":
-				return String.valueOf(tps()[2]);
+				return String.valueOf(serverUtils.getTps()[2]);
 			case "1_colored":
 			case "one_colored":
-				return getColoredTps(tps()[0]);
+				return getColoredTps(serverUtils.getTps()[0]);
 			case "5_colored":
 			case "five_colored":
-				return getColoredTps(tps()[1]);
+				return getColoredTps(serverUtils.getTps()[1]);
 			case "15_colored":
 			case "fifteen_colored":
-				return getColoredTps(tps()[2]);
+				return getColoredTps(serverUtils.getTps()[2]);
 			case "percent": {
 				final StringJoiner joiner = new StringJoiner(ChatColor.GRAY + ", ");
 
-				for (double t : tps()) {
+				for (double t : serverUtils.getTps()) {
 					joiner.add(getColoredTpsPercent(t));
 				}
 
@@ -333,22 +316,22 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			}
 			case "1_percent":
 			case "one_percent":
-				return getPercent(tps()[0]);
+				return getPercent(serverUtils.getTps()[0]);
 			case "5_percent":
 			case "five_percent":
-				return getPercent(tps()[1]);
+				return getPercent(serverUtils.getTps()[1]);
 			case "15_percent":
 			case "fifteen_percent":
-				return getPercent(tps()[2]);
+				return getPercent(serverUtils.getTps()[2]);
 			case "1_percent_colored":
 			case "one_percent_colored":
-				return getColoredTpsPercent(tps()[0]);
+				return getColoredTpsPercent(serverUtils.getTps()[0]);
 			case "5_percent_colored":
 			case "five_percent_colored":
-				return getColoredTpsPercent(tps()[1]);
+				return getColoredTpsPercent(serverUtils.getTps()[1]);
 			case "15_percent_colored":
 			case "fifteen_percent_colored":
-				return getColoredTpsPercent(tps()[2]);
+				return getColoredTpsPercent(serverUtils.getTps()[2]);
 		}
 		return null;
 	}
@@ -409,18 +392,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		return builder.toString();
 	}
 	
-	private double[] tps() {
-		if (version == null || craftServer == null || tps == null) {
-			return new double[] { 0, 0, 0 };
-		}
-		try {
-			return ((double[]) tps.get(craftServer));
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		}
-		return new double[] { 0, 0, 0 };
-	}
-	
 	private double fix(double tps) {
 		return Math.min(Math.round(tps * 100.0) / 100.0, 20.0);
 	}
@@ -467,26 +438,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	
 	private String getPercent(double tps){
 		return Math.min(Math.round(100 / 20.0 * tps), 100.0) + "%";
-	}
-
-	/**
-	 * Helper method to return the major version that the server is running.
-	 *
-	 * This is needed because in 1.17, NMS is no longer versioned.
-	 *
-	 * @return the major version of Minecraft the server is running
-	 */
-	public static int minecraftVersion() {
-		try {
-			final Matcher matcher = Pattern.compile("\\(MC: (\\d)\\.(\\d+)\\.?(\\d+?)?\\)").matcher(Bukkit.getVersion());
-			if (matcher.find()) {
-				return Integer.parseInt(matcher.toMatchResult().group(2), 10);
-			} else {
-				throw new IllegalArgumentException(String.format("No match found in '%s'", Bukkit.getVersion()));
-			}
-		} catch (final IllegalArgumentException ex) {
-			throw new RuntimeException("Failed to determine Minecraft version", ex);
-		}
 	}
 
 }
