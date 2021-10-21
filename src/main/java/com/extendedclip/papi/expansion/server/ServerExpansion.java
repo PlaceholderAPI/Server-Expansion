@@ -75,7 +75,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 	@Override
 	public void clear() {
-		serverUtils.clear();
 		dateFormats.clear();
 		serverUtils = null;
 		cache.invalidateAll();

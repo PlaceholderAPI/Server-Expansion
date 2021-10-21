@@ -87,11 +87,6 @@ public final class ServerUtils {
         }
     }
     
-    public void clear() {
-        craftServer = null;
-        tps = null;
-    }
-    
     public double[] getTps() {
         if (hasTpsMethod) {
             return Bukkit.getTPS();
