@@ -46,11 +46,10 @@ import java.util.concurrent.TimeUnit;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 	
-	private final ServerUtils serverUtils;
+	private ServerUtils serverUtils = null;
 	
 	private final Map<String, SimpleDateFormat> dateFormats = new HashMap<>();
 	private final Runtime runtime = Runtime.getRuntime();
-	private final String variant;
 
 	// config stuff
 	private String serverName;
@@ -65,12 +64,6 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 	private final String VERSION = getClass().getPackage().getImplementationVersion();
 
-	public ServerExpansion() {
-		this.serverUtils = new ServerUtils();
-
-		this.variant = serverUtils.getServerVariant();
-	}
-
 	@Override
 	public boolean canRegister() {
 		serverName = this.getString("server_name", "A Minecraft Server");
@@ -84,7 +77,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	public void clear() {
 		serverUtils.clear();
 		dateFormats.clear();
-		
+		serverUtils = null;
 		cache.invalidateAll();
 	}
 
@@ -114,8 +107,11 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	}
 
 	@Override
-	public String onRequest(OfflinePlayer p, String identifier) {
+	public String onRequest(OfflinePlayer p, @NotNull String identifier) {
 		final int MB = 1048576;
+		if (serverUtils == null) {
+			serverUtils = new ServerUtils();
+		}
 
 		switch (identifier) {
 			// Players placeholders
@@ -152,7 +148,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			case "name":
 				return serverName == null ? "" : serverName;
 			case "variant":
-				return variant;
+				return serverUtils.getServerVariant();
 			// -----
 
 			// Other placeholders
