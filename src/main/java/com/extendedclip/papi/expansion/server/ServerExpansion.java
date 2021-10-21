@@ -150,6 +150,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			case "build":
 				return ServerUtils.BUILD;
 			case "version_build":
+			case "version_full":
 				return ServerUtils.VERSION + '-' + ServerUtils.BUILD;
 			// -----
 
