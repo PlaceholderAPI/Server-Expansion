@@ -274,24 +274,22 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 
 	public String getTps(String arg) {
 		if (arg == null || arg.isEmpty()) {
-			StringBuilder sb = new StringBuilder();
-			for (double t : serverUtils.getTps()) {
-				sb.append(getColoredTps(t))
-				  .append(ChatColor.GRAY)
-				  .append(", ");
+			StringJoiner joiner = new StringJoiner(ChatColor.GRAY + ", ");
+			for (double tps : serverUtils.getTps()) {
+				joiner.add(getColoredTps(tps));
 			}
-			return sb.toString();
+			return joiner.toString();
 		}
-		switch (arg) { 
+		switch (arg) {
 			case "1":
-			case "one":
-			return String.valueOf(fix(serverUtils.getTps()[0]));
+			case "one": 
+				return fix(serverUtils.getTps()[0]);
 			case "5":
 			case "five":
-				return String.valueOf(fix(serverUtils.getTps()[1]));
+				return fix(serverUtils.getTps()[1]);
 			case "15":
 			case "fifteen":
-				return String.valueOf(serverUtils.getTps()[2]);
+				return fix(serverUtils.getTps()[2]);
 			case "1_colored":
 			case "one_colored":
 				return getColoredTps(serverUtils.getTps()[0]);
@@ -388,13 +386,14 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		return builder.toString();
 	}
 	
-	private double fix(double tps) {
-		return Math.min(Math.round(tps * 100.0) / 100.0, 20.0);
+	private String fix(double tps) {
+		double finalTps = Math.min(Math.round(tps), 20.0);
+		
+		return (tps > 20.0 ? "*" : "") + finalTps;
 	}
 	
 	private String color(double tps) {
-		return ChatColor.translateAlternateColorCodes('&', (tps > 18.0) ? high : (tps > 16.0) ? medium : low)
-				+ ((tps > 20.0) ? "*" : "");
+		return ChatColor.translateAlternateColorCodes('&', (tps > 18.0) ? high : (tps > 16.0) ? medium : low);
 	}
 	
 	private String getColoredTps(double tps) {
@@ -403,6 +402,12 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	
 	private String getColoredTpsPercent(double tps){
 		return color(tps) + getPercent(tps);
+	}
+	
+	private String getPercent(double tps){
+		double finalPercent = Math.min(Math.round(100 / 20.0 * tps), 100.0);
+		
+		return (tps > 20.0 ? "*" : "") + finalPercent + "%";
 	}
 	
 	private Integer getChunks(){
@@ -431,9 +436,4 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		
 		return allEntities;
 	}
-	
-	private String getPercent(double tps){
-		return Math.min(Math.round(100 / 20.0 * tps), 100.0) + "%";
-	}
-
 }

@@ -93,6 +93,7 @@ public final class ServerUtils {
     }
     
     public double[] getTps() {
+        System.out.println(hasTpsMethod);
         if (hasTpsMethod) {
             return Bukkit.getTPS();
         }
