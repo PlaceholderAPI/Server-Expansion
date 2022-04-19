@@ -24,7 +24,7 @@ public final class ServerUtils {
     private boolean hasTpsMethod = false;
     
     public ServerUtils() {
-        variants.put("Spigot", "org.spigotnc.SpigotConfig");
+        variants.put("Spigot", "org.spigotmc.SpigotConfig");
         variants.put("Paper", "com.destroystokyo.paper.PaperConfig");
         variants.put("Tuinity", "com.tuinity.tuinity.config.TuinityConfig");
         variants.put("Airplane", "gg.airplane.AirplaneConfig");
@@ -106,9 +106,9 @@ public final class ServerUtils {
     private void resolveTPSHandler() {
         try {
             // If this throws is the server not a fork...
-            Bukkit.getTPS();
+            Class.forName("org.bukkit.Bukkit").getMethod("getTPS");
             hasTpsMethod = true;
-        } catch (Exception ignored) {
+        } catch (ClassNotFoundException | NoSuchMethodException ignored) {
             final String mcVersion = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
             
             try {
