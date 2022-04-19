@@ -106,9 +106,9 @@ public final class ServerUtils {
     private void resolveTPSHandler() {
         try {
             // If this throws is the server not a fork...
-            Class.forName("org.bukkit.Bukkit").getMethod("getTPS");
+            Bukkit.class.getMethod("getTPS");
             hasTpsMethod = true;
-        } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+        } catch (NoSuchMethodException ignored) {
             final String mcVersion = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
             
             try {
