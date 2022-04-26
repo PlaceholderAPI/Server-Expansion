@@ -20,8 +20,8 @@
  */
 package com.extendedclip.papi.expansion.server;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.Cacheable;
@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
@@ -58,7 +59,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private String high = "&a";
 	// -----
 	
-	private final Cache<String, Integer> cache = Caffeine.newBuilder()
+	private final Cache<String, Integer> cache = CacheBuilder.newBuilder()
 			.expireAfterWrite(1, TimeUnit.MINUTES)
 			.build();
 
@@ -157,11 +158,23 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 				long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
 				return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
 			case "total_chunks":
-				return String.valueOf(cache.get("chunks", k -> getChunks()));
+				try {
+					return String.valueOf(cache.get("chunks", this::getChunks));
+				} catch (ExecutionException e) {
+					throw new RuntimeException(e);
+				}
 			case "total_living_entities":
-				return String.valueOf(cache.get("livingEntities", k -> getLivingEntities()));
+				try {
+					return String.valueOf(cache.get("livingEntities", this::getLivingEntities));
+				} catch (ExecutionException e) {
+					throw new RuntimeException(e);
+				}
 			case "total_entities":
-				return String.valueOf(cache.get("totalEntities", k -> getTotalEntities()));
+				try {
+					return String.valueOf(cache.get("totalEntities", this::getTotalEntities));
+				} catch (ExecutionException e) {
+					throw new RuntimeException(e);
+				}
 			case "has_whitelist":
 				return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		}
