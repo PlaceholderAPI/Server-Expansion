@@ -41,6 +41,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.Callable;
@@ -116,6 +117,27 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 			getPlaceholderAPI().getLogger().log(Level.SEVERE, "[server] Could not access cache key " + key, e);
 			return "Error: " + e.getMessage() + " (see console)";
 		}
+	}
+
+	private int getChunks(){
+		return Bukkit.getWorlds()
+				.stream()
+				.mapToInt(world -> world.getLoadedChunks().length)
+				.sum();
+	}
+
+	private int getLivingEntities(){
+		return Bukkit.getWorlds()
+				.stream()
+				.mapToInt(world -> world.getLivingEntities().size())
+				.sum();
+	}
+
+	private Integer getTotalEntities(){
+		return Bukkit.getWorlds()
+				.stream()
+				.mapToInt(world -> world.getEntities().size())
+				.sum();
 	}
 
 	@Override
@@ -421,31 +443,5 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		
 		return (tps > 20.0 ? "*" : "") + finalPercent + "%";
 	}
-	
-	private Integer getChunks(){
-		int loadedChunks = 0;
-		for (final World world : Bukkit.getWorlds()) {
-			loadedChunks += world.getLoadedChunks().length;
-		}
-		
-		return loadedChunks;
-	}
-	
-	private Integer getLivingEntities(){
-		int livingEntities = 0;
-		for (final World world : Bukkit.getWorlds()) {
-			livingEntities += world.getLivingEntities().size();
-		}
-		
-		return livingEntities;
-	}
-	
-	private Integer getTotalEntities(){
-		int allEntities = 0;
-		for (World world : Bukkit.getWorlds()) {
-			allEntities += world.getEntities().size();
-		}
-		
-		return allEntities;
-	}
+
 }
