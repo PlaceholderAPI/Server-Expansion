@@ -33,6 +33,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
@@ -42,8 +43,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 	
@@ -106,6 +109,15 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		return defaults;
 	}
 
+	private @Nullable String getCached(String key, Callable<Integer> callable) {
+		try {
+			return String.valueOf(cache.get(key, callable));
+		} catch (ExecutionException e) {
+			getPlaceholderAPI().getLogger().log(Level.SEVERE, "[server] Could not access cache key " + key, e);
+			return "Error: " + e.getMessage() + " (see console)";
+		}
+	}
+
 	@Override
 	public String onRequest(OfflinePlayer p, @NotNull String identifier) {
 		final int MB = 1048576;
@@ -158,23 +170,11 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 				long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
 				return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
 			case "total_chunks":
-				try {
-					return String.valueOf(cache.get("chunks", this::getChunks));
-				} catch (ExecutionException e) {
-					throw new RuntimeException(e);
-				}
+				return getCached("chunks", this::getChunks);
 			case "total_living_entities":
-				try {
-					return String.valueOf(cache.get("livingEntities", this::getLivingEntities));
-				} catch (ExecutionException e) {
-					throw new RuntimeException(e);
-				}
+				return getCached("livingEntities", this::getLivingEntities);
 			case "total_entities":
-				try {
-					return String.valueOf(cache.get("totalEntities", this::getTotalEntities));
-				} catch (ExecutionException e) {
-					throw new RuntimeException(e);
-				}
+				return getCached("totalEntities", this::getTotalEntities);
 			case "has_whitelist":
 				return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		}
