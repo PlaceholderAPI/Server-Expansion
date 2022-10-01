@@ -24,11 +24,12 @@ public final class ServerUtils {
     private boolean hasTpsMethod = false;
     
     public ServerUtils() {
-        variants.put("Spigot", "org.spigotmc.SpigotConfig");
-        variants.put("Paper", "com.destroystokyo.paper.PaperConfig");
-        variants.put("Tuinity", "com.tuinity.tuinity.config.TuinityConfig");
-        variants.put("Airplane", "gg.airplane.AirplaneConfig");
-        variants.put("Purpur", "net.pl3x.purpur.PurpurConfig");
+        variants.put("org.spigotmc.SpigotConfig", "Spigot");
+        variants.put("io.papermc.paper.configuration.ConfigurationLoaders", "Paper"); // New config location for Paper 1.19+
+        variants.put("com.destroystokyo.paper.PaperConfig", "Paper"); // Still supported by Paper, but deprecated.
+        variants.put("com.tuinity.tuinity.config.TuinityConfig", "Tuinity");
+        variants.put("gg.airplane.AirplaneConfig", "Airplane");
+        variants.put("net.pl3x.purpur.PurpurConfig", "Purpur");
         
         resolveTPSHandler();
     }
@@ -40,9 +41,9 @@ public final class ServerUtils {
         
         for(Map.Entry<String, String> variant : variants.entrySet()) {
             try {
-                Class.forName(variant.getValue());
+                Class.forName(variant.getKey());
                 
-                return (this.variant = variant.getKey());
+                return (this.variant = variant.getValue());
             } catch (ClassNotFoundException ignored) {} 
         }
         
