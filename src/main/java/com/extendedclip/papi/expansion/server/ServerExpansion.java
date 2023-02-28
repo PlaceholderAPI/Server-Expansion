@@ -20,8 +20,8 @@
  */
 package com.extendedclip.papi.expansion.server;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.Cacheable;
@@ -33,6 +33,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
@@ -40,9 +41,13 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 	
@@ -58,7 +63,7 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 	private String high = "&a";
 	// -----
 	
-	private final Cache<String, Integer> cache = Caffeine.newBuilder()
+	private final Cache<String, Integer> cache = CacheBuilder.newBuilder()
 			.expireAfterWrite(1, TimeUnit.MINUTES)
 			.build();
 
@@ -103,6 +108,38 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		defaults.put("tps_color.low", "&c");
 		defaults.put("server_name", "A Minecraft Server");
 		return defaults;
+	}
+
+	private @Nullable String getCached(String key, Callable<Integer> callable) {
+		try {
+			return String.valueOf(cache.get(key, callable));
+		} catch (ExecutionException e) {
+			if (getPlaceholderAPI().getPlaceholderAPIConfig().isDebugMode()) {
+				getPlaceholderAPI().getLogger().log(Level.SEVERE, "[server] Could not access cache key " + key, e);
+			}
+			return "";
+		}
+	}
+
+	private int getChunks(){
+		return Bukkit.getWorlds()
+				.stream()
+				.mapToInt(world -> world.getLoadedChunks().length)
+				.sum();
+	}
+
+	private int getLivingEntities(){
+		return Bukkit.getWorlds()
+				.stream()
+				.mapToInt(world -> world.getLivingEntities().size())
+				.sum();
+	}
+
+	private Integer getTotalEntities(){
+		return Bukkit.getWorlds()
+				.stream()
+				.mapToInt(world -> world.getEntities().size())
+				.sum();
 	}
 
 	@Override
@@ -157,11 +194,11 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 				long seconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
 				return formatTime(Duration.of(seconds, ChronoUnit.SECONDS));
 			case "total_chunks":
-				return String.valueOf(cache.get("chunks", k -> getChunks()));
+				return getCached("chunks", this::getChunks);
 			case "total_living_entities":
-				return String.valueOf(cache.get("livingEntities", k -> getLivingEntities()));
+				return getCached("livingEntities", this::getLivingEntities);
 			case "total_entities":
-				return String.valueOf(cache.get("totalEntities", k -> getTotalEntities()));
+				return getCached("totalEntities", this::getTotalEntities);
 			case "has_whitelist":
 				return Bukkit.getServer().hasWhitelist() ? PlaceholderAPIPlugin.booleanTrue() : PlaceholderAPIPlugin.booleanFalse();
 		}
@@ -408,31 +445,5 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		
 		return (tps > 20.0 ? "*" : "") + finalPercent + "%";
 	}
-	
-	private Integer getChunks(){
-		int loadedChunks = 0;
-		for (final World world : Bukkit.getWorlds()) {
-			loadedChunks += world.getLoadedChunks().length;
-		}
-		
-		return loadedChunks;
-	}
-	
-	private Integer getLivingEntities(){
-		int livingEntities = 0;
-		for (final World world : Bukkit.getWorlds()) {
-			livingEntities += world.getLivingEntities().size();
-		}
-		
-		return livingEntities;
-	}
-	
-	private Integer getTotalEntities(){
-		int allEntities = 0;
-		for (World world : Bukkit.getWorlds()) {
-			allEntities += world.getEntities().size();
-		}
-		
-		return allEntities;
-	}
+
 }
