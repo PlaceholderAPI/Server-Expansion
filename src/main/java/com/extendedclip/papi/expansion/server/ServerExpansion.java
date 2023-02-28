@@ -114,8 +114,10 @@ public class ServerExpansion extends PlaceholderExpansion implements Cacheable, 
 		try {
 			return String.valueOf(cache.get(key, callable));
 		} catch (ExecutionException e) {
-			getPlaceholderAPI().getLogger().log(Level.SEVERE, "[server] Could not access cache key " + key, e);
-			return "Error: " + e.getMessage() + " (see console)";
+			if (getPlaceholderAPI().getPlaceholderAPIConfig().isDebugMode()) {
+				getPlaceholderAPI().getLogger().log(Level.SEVERE, "[server] Could not access cache key " + key, e);
+			}
+			return "";
 		}
 	}
 
