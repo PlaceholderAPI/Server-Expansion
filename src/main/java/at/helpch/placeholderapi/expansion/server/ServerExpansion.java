@@ -106,7 +106,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
     }
 
     /**
-     * Format a boolean {@code boolean} as {@link PlaceholderAPIPlugin#booleanTrue()} or {@link PlaceholderAPIPlugin#booleanFalse()}
+     * Format a {@code boolean} as {@link PlaceholderAPIPlugin#booleanTrue()} or {@link PlaceholderAPIPlugin#booleanFalse()}
      *
      * @param bool boolean
      * @return {@link PlaceholderAPIPlugin#booleanTrue()} if the boolean is true, otherwise {@link PlaceholderAPIPlugin#booleanFalse()}
