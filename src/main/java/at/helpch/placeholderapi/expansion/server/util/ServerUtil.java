@@ -13,6 +13,7 @@ public final class ServerUtil {
 
     private static final Map<String, String> variants = new TreeMap<>();
     private static final String variant;
+    private static final String serverVersion;
 
     // TPS stuff
     private static final Object craftServer;
@@ -28,6 +29,7 @@ public final class ServerUtil {
         variants.put("org.spigotmc.SpigotConfig", "Spigot");
 
         variant = findVariant();
+        serverVersion = Bukkit.getBukkitVersion().split("-")[0]; // The version is formatted as 1.20.1-R0.1-SNAPSHOT
         craftServer = getCraftServer();
         tpsField = getTpsHandler();
     }
@@ -50,7 +52,7 @@ public final class ServerUtil {
         try {
             Class<?> clas;
 
-            if (VersionHelper.OVER_1_17) {
+            if (VersionHelper.IS_1_17_OR_HIGHER) {
                 clas = Class.forName("net.minecraft.server.MinecraftServer");
             } else {
                 clas = Class.forName(String.format("net.minecraft.server.%s.MinecraftServer", VersionHelper.NMS_VERSION));
@@ -70,23 +72,32 @@ public final class ServerUtil {
         try {
             Bukkit.class.getMethod("getTPS");
             hasTpsMethod = true;
+            return null;
         } catch (NoSuchMethodException ignored) { }
 
         if (craftServer == null) {
-            PlaceholderAPIPlugin.getInstance().getLogger().log(Level.WARNING, "Could not get field 'recentTps' from class MinecraftServer because variable 'craftServer' is null");
+            PlaceholderAPIPlugin.getInstance()
+                    .getLogger()
+                    .log(Level.WARNING, "[server] Could not get field 'recentTps' from class MinecraftServer because variable 'craftServer' is null");
             return null;
         }
 
         try {
             return craftServer.getClass().getField("recentTps");
         } catch (NoSuchFieldException e) {
-            PlaceholderAPIPlugin.getInstance().getLogger().log(Level.WARNING, "Could not find field 'recentTps' in class " + craftServer.getClass().getName(), e);
+            PlaceholderAPIPlugin.getInstance()
+                    .getLogger()
+                    .log(Level.WARNING, "[server] Could not find field 'recentTps' in class " + craftServer.getClass().getName(), e);
             return null;
         }
     }
 
     public static String getVariant() {
         return variant;
+    }
+
+    public static String getServerVersion() {
+        return serverVersion;
     }
 
     public static double[] getTps() {
