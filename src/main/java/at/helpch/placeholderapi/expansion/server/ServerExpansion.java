@@ -1,6 +1,8 @@
 package at.helpch.placeholderapi.expansion.server;
 
+import at.helpch.placeholderapi.expansion.server.util.Logging;
 import at.helpch.placeholderapi.expansion.server.util.ServerUtil;
+import at.helpch.placeholderapi.expansion.server.util.TimeFormatter;
 import at.helpch.placeholderapi.expansion.server.util.TpsFormatter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -16,25 +18,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.StringJoiner;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
-import java.util.logging.Level;
 
 public final class ServerExpansion extends PlaceholderExpansion implements Cacheable, Configurable {
 
     private final Cache<String, Integer> cache = CacheBuilder.newBuilder()
-            .expireAfterWrite(1, TimeUnit.MINUTES)
-            .build();
-
-    private final Map<String, SimpleDateFormat> dateFormats = new HashMap<>();
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .build();
 
     private final Runtime runtime = Runtime.getRuntime();
 
@@ -48,6 +46,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
     // -----
 
     private TpsFormatter tpsFormatter;
+    private TimeFormatter timeFormatter;
 
     @Override
     public @NotNull String getIdentifier() {
@@ -68,9 +67,13 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
     public boolean canRegister() {
         this.serverName = getString("server_name", "A Minecraft Server");
         this.tpsFormatter = new TpsFormatter(
-                getString("tps_color.low", "&c"),
-                getString("tps_color.medium", "&e"),
-                getString("tps_color.high", "&a")
+            getString("tps_color.low", "&c"),
+            getString("tps_color.medium", "&e"),
+            getString("tps_color.high", "&a")
+        );
+        this.timeFormatter = new TimeFormatter(
+            Locale.forLanguageTag(this.getString("time.locale", Locale.getDefault().toLanguageTag())),
+            ZoneId.of(this.getString("time.zone", ZoneId.systemDefault().getId()))
         );
         return true;
     }
@@ -78,18 +81,20 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
     @Override
     public void clear() {
         cache.invalidateAll();
-        dateFormats.clear();
+        timeFormatter = null;
         tpsFormatter = null;
     }
 
     @Override
     public Map<String, Object> getDefaults() {
         return ImmutableMap.<String, Object>builder()
-                .put("server_name", "A Minecraft Server")
-                .put("tps_color.high", "&a")
-                .put("tps_color.medium", "&e")
-                .put("tps_color.low", "&c")
-                .build();
+            .put("server_name", "A Minecraft Server")
+            .put("time.locale", Locale.getDefault().toLanguageTag())
+            .put("time.zone", ZoneId.systemDefault().getId())
+            .put("tps_color.high", "&a")
+            .put("tps_color.medium", "&e")
+            .put("tps_color.low", "&c")
+            .build();
     }
 
     /**
@@ -100,9 +105,9 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
      */
     private int getFromAllWorlds(@NotNull final ToIntFunction<? super World> function) {
         return Bukkit.getWorlds()
-                .stream()
-                .mapToInt(function)
-                .sum();
+            .stream()
+            .mapToInt(function)
+            .sum();
     }
 
     /**
@@ -116,9 +121,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
         try {
             return String.valueOf(cache.get(key, callable));
         } catch (ExecutionException e) {
-            PlaceholderAPIPlugin.getInstance()
-                    .getLogger()
-                    .log(Level.WARNING, "[server] Could not get '" + key + "' from cache", e);
+            Logging.error(e, "Count not get key \"{0}\" from cache", key);
             return "";
         }
     }
@@ -144,62 +147,10 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
             return -1;
         }
 
-        final World world = Bukkit.getWorld(worldName);
-        return world == null ? -1 : world.getPlayers().size();
-    }
-
-    /**
-     * Format the current time with the given format
-     *
-     * @param format format
-     * @return {@code null} if the format is empty or invalid, otherwise the current {@link Date} formatted
-     */
-    private @Nullable String formatTime(@NotNull final String format) {
-        if (format.trim().isEmpty()) {
-            return null;
-        }
-
-        final SimpleDateFormat simpleDateFormat = dateFormats.computeIfAbsent(format, __ -> {
-            try {
-                return new SimpleDateFormat(format);
-            } catch (IllegalArgumentException ignored) {
-                return null;
-            }
-        });
-        return simpleDateFormat == null ? null : simpleDateFormat.format(new Date());
-    }
-
-    /**
-     * Format time as {@code #w #d #h #m #s}
-     *
-     * @param time time in seconds
-     * @return time formatted
-     */
-    private @NotNull String formatTime(long time) {
-        final StringJoiner joiner = new StringJoiner(" ");
-        final BiConsumer<Long, Character> appendTime = (value, unit) -> {
-            if (value > 0) {
-                joiner.add(value + Character.toString(unit));
-            }
-        };
-
-        long seconds = time;
-        long minutes = seconds / 60;
-        long hours = minutes / 60;
-        long days = hours / 24;
-        final long weeks = days / 7;
-
-        seconds %= 60;
-        minutes %= 60;
-        hours %= 60;
-        days %= 7;
-
-        appendTime.accept(weeks, 'w');
-        appendTime.accept(days, 'd');
-        appendTime.accept(hours, 'h');
-        appendTime.accept(minutes, 'm');
-        appendTime.accept(seconds, 's');
-        return joiner.toString();
+        return Optional.ofNullable(Bukkit.getWorld(worldName))
+            .map(World::getPlayers)
+            .map(List::size)
+            .orElse(-1);
     }
 
     @Override
@@ -221,11 +172,15 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
                 return ServerUtil.getVariant();
             case "version":
                 return ServerUtil.getServerVersion();
-            // TODO add version_build and version_full (same placeholder)
+            case "build":
+                return ServerUtil.getBuild();
+            case "version_build":
+            case "version_full":
+                return ServerUtil.getServerVersion() + '-' + ServerUtil.getBuild();
             // -----
 
             // ----- RAM placeholders
-            case "ram":
+            case "ram_used":
                 return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
             case "ram_free":
                 return String.valueOf(runtime.freeMemory() / MB);
@@ -238,7 +193,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
             case "tps":
                 return tpsFormatter.getTps(null);
             case "uptime":
-                return formatTime(TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime()));
+                return timeFormatter.formatTimeInSeconds(TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime()));
             case "total_chunks":
                 return getFromCache("chunks", () -> getFromAllWorlds(world -> world.getLoadedChunks().length));
             case "total_living_entities":
@@ -261,7 +216,17 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
 
         // time_<simple date format>
         if (params.startsWith("time_")) {
-            return formatTime(params.replace("time_", ""));
+            return timeFormatter.formatTime(params.replace("time_", ""));
+        }
+
+        // countdown_<date> or countdown_<custom format>_<date>
+        if (params.startsWith("countdown_")) {
+            return timeFormatter.calculateTimeBetween(player, params.replace("countdown_", ""), true);
+        }
+
+        // countup_<date> or countup_<custom format>_<date>
+        if (params.startsWith("countup_")) {
+            return timeFormatter.calculateTimeBetween(player, params.replace("countup_", ""), false);
         }
 
         return null;
