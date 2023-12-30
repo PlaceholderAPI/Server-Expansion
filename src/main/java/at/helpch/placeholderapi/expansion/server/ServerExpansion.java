@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,9 +38,11 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
     private final Runtime runtime = Runtime.getRuntime();
 
     /**
-     * Constant that represents how many bytes are in a megabyte
+     * Constant that represents how many bytes are in a mebibyte
+     * <br/>
+     * Required for the {@code ram_} placeholders, as the values provided by the system are in bytes
      */
-    private final int MB = 1_048_576;
+    private final int MiB = 1_048_576;
 
     // ----- Values from config
     private String serverName;
@@ -73,7 +76,8 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
         );
         this.timeFormatter = new TimeFormatter(
             Locale.forLanguageTag(this.getString("time.locale", Locale.getDefault().toLanguageTag())),
-            ZoneId.of(this.getString("time.zone", ZoneId.systemDefault().getId()))
+            ZoneId.of(this.getString("time.zone", ZoneId.systemDefault().getId())),
+            Optional.ofNullable(getConfigSection("time.suffix")).map(section -> section.getValues(false)).orElseGet(HashMap::new)
         );
         return true;
     }
@@ -91,6 +95,11 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
             .put("server_name", "A Minecraft Server")
             .put("time.locale", Locale.getDefault().toLanguageTag())
             .put("time.zone", ZoneId.systemDefault().getId())
+            .put("time.suffix.week", "w")
+            .put("time.suffix.day", "d")
+            .put("time.suffix.hour", "h")
+            .put("time.suffix.minute", "m")
+            .put("time.suffix.second", "s")
             .put("tps_color.high", "&a")
             .put("tps_color.medium", "&e")
             .put("tps_color.low", "&c")
@@ -121,7 +130,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
         try {
             return String.valueOf(cache.get(key, callable));
         } catch (ExecutionException e) {
-            Logging.error(e, "Count not get key \"{0}\" from cache", key);
+            Logging.error(e, "Could not get key \"{0}\" from cache", key);
             return "";
         }
     }
@@ -153,6 +162,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
             .orElse(-1);
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
     @Override
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
         switch (params) {
@@ -181,13 +191,13 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
 
             // ----- RAM placeholders
             case "ram_used":
-                return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MB);
+                return String.valueOf((runtime.totalMemory() - runtime.freeMemory()) / MiB);
             case "ram_free":
-                return String.valueOf(runtime.freeMemory() / MB);
+                return String.valueOf(runtime.freeMemory() / MiB);
             case "ram_total":
-                return String.valueOf(runtime.totalMemory() / MB);
+                return String.valueOf(runtime.totalMemory() / MiB);
             case "ram_max":
-                return String.valueOf(runtime.maxMemory() / MB);
+                return String.valueOf(runtime.maxMemory() / MiB);
             // -----
 
             case "tps":
@@ -206,37 +216,37 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
 
         // tps_<type>
         if (params.startsWith("tps_")) {
-            return tpsFormatter.getTps(params.replace("tps_", ""));
+            return tpsFormatter.getTps(params.substring("tps_".length()));
         }
 
         // online_<world name>
         if (params.startsWith("online_")) {
-            return String.valueOf(getOnlinePlayers(params.replace("online_", "")));
+            return String.valueOf(getOnlinePlayers(params.substring("online_".length())));
         }
 
         // time_<simple date format>
         if (params.startsWith("time_")) {
-            return timeFormatter.formatTime(params.replace("time_", ""));
+            return timeFormatter.formatTime(params.substring("time_".length()));
         }
 
         // countdown_raw_<date> or countdown_raw_<custom format>_<date>
         if (params.startsWith("countdown_raw_")) {
-            return timeFormatter.calculateTimeBetweenWithoutFormat(player, params.replace("countdown_raw_", ""), true);
+            return timeFormatter.calculateTimeBetweenWithoutFormat(player, params.substring("countdown_raw_".length()), true);
         }
 
         // countdown_<date> or countdown_<custom format>_<date>
         if (params.startsWith("countdown_")) {
-            return timeFormatter.calculateTimeBetween(player, params.replace("countdown_", ""), true, true);
+            return timeFormatter.calculateTimeBetween(player, params.substring("countdown_".length()), true, true);
         }
 
         // countup_raw_<date> or countup_raw_<custom format>_<date>
         if (params.startsWith("countup_raw_")) {
-            return timeFormatter.calculateTimeBetweenWithoutFormat(player, params.replace("countup_raw_", ""), false);
+            return timeFormatter.calculateTimeBetweenWithoutFormat(player, params.substring("countup_raw_".length()), false);
         }
 
         // countup_<date> or countup_<custom format>_<date>
         if (params.startsWith("countup_")) {
-            return timeFormatter.calculateTimeBetween(player, params.replace("countup_", ""), false, true);
+            return timeFormatter.calculateTimeBetween(player, params.substring("countup_".length()), false, true);
         }
 
         return null;

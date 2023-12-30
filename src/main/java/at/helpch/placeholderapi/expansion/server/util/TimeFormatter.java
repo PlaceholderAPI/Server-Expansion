@@ -24,10 +24,15 @@ public final class TimeFormatter {
 
     private final Locale timeLocale;
     private final ZoneId timeZone;
+    private final Map<@NotNull String, @Nullable Object> timeUnitSuffixes;
 
-    public TimeFormatter(@NotNull final Locale timeLocale, @NotNull final ZoneId timeZone) {
+    public TimeFormatter(
+        @NotNull final Locale timeLocale, @NotNull final ZoneId timeZone,
+        @NotNull Map<@NotNull String, @Nullable Object> timeUnitSuffixes
+    ) {
         this.timeLocale = timeLocale;
         this.timeZone = timeZone;
+        this.timeUnitSuffixes = timeUnitSuffixes;
     }
 
     /**
@@ -71,9 +76,9 @@ public final class TimeFormatter {
      */
     public @NotNull String formatTimeInSeconds(long time) {
         final StringJoiner joiner = new StringJoiner(" ");
-        final BiConsumer<Long, Character> appendTime = (value, unit) -> {
-            if (value > 0) {
-                joiner.add(value + Character.toString(unit));
+        final BiConsumer<@NotNull Long, @Nullable Object> appendTime = (value, unit) -> {
+            if (value > 0 && unit != null) {
+                joiner.add(value + unit.toString());
             }
         };
 
@@ -88,11 +93,11 @@ public final class TimeFormatter {
         hours %= 24;
         days %= 7;
 
-        appendTime.accept(weeks, 'w');
-        appendTime.accept(days, 'd');
-        appendTime.accept(hours, 'h');
-        appendTime.accept(minutes, 'm');
-        appendTime.accept(seconds, 's');
+        appendTime.accept(weeks, timeUnitSuffixes.get("week"));
+        appendTime.accept(days, timeUnitSuffixes.get("day"));
+        appendTime.accept(hours, timeUnitSuffixes.get("hour"));
+        appendTime.accept(minutes, timeUnitSuffixes.get("minute"));
+        appendTime.accept(seconds, timeUnitSuffixes.get("second"));
         return joiner.toString();
     }
 

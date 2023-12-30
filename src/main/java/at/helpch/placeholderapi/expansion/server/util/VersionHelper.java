@@ -28,6 +28,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,12 +54,16 @@ public final class VersionHelper {
      * @return True if on Paper server (or forks), false anything else
      */
     private static boolean checkPaper() {
-        try {
-            Class.forName("com.destroystokyo.paper.PaperConfig");
-            return true;
-        } catch (ClassNotFoundException ignored) {
-            return false;
+        final String[] configClasses = {"io.papermc.paper.configuration.ConfigurationLoaders", "com.destroystokyo.paper.PaperConfig"};
+
+        for (String configClass : configClasses) {
+            try {
+                Class.forName(configClass);
+                return true;
+            } catch (ClassNotFoundException ignored) { }
         }
+
+        return false;
     }
 
     /**

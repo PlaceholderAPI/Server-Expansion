@@ -34,12 +34,12 @@ public final class ServerUtil {
     }
 
     private static String findVariant() {
-        try {
-            for (final Map.Entry<String, String> entry : variants.entrySet()) {
-                Class.forName(entry.getKey());
-                return entry.getValue();
-            }
-        } catch (ClassNotFoundException ignored) { }
+        for (final Map.Entry<String, String> entry : variants.entrySet()) {
+            try {
+                    Class.forName(entry.getKey());
+                    return entry.getValue();
+            } catch (ClassNotFoundException ignored) { }
+        }
 
         // Source: https://github.com/PaperMC/Paper/blob/f7717c3/patches/server/0027-Show-Paper-in-client-crashes-server-lists-and-Mojang.patch#L17
         if (craftServer != null) {
