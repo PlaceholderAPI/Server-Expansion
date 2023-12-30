@@ -98,16 +98,17 @@ public final class TimeFormatter {
 
     /**
      * Calculate the time between {@link LocalDateTime#now(ZoneId)} and another date and return a formatted value
-     * using {@link #formatTimeInSeconds(long)}
+     * using {@link #formatTimeInSeconds(long)} if {@code formatTime} is {@code true}.
      *
      * @param player      player
      * @param args        arguments received on {@link me.clip.placeholderapi.expansion.PlaceholderExpansion#onRequest(OfflinePlayer, String)}
      * @param isCountdown whether the time calculated is for a countdown or a count-up
+     * @param formatTime  whether the time should be formatted with {@link #formatTimeInSeconds(long)}
      * @return time formatter
      */
     public @NotNull String calculateTimeBetween(
         @Nullable final OfflinePlayer player, @NotNull final String args,
-        final boolean isCountdown
+        final boolean isCountdown, final boolean formatTime
     ) {
         DateTimeFormatter formatter;
         String otherDateString;
@@ -144,16 +145,20 @@ public final class TimeFormatter {
                 return "0";
             }
 
-            if (isCountdown) {
-                return this.formatTimeInSeconds(now.until(otherDate, ChronoUnit.SECONDS));
-            } else {
-                return this.formatTimeInSeconds(otherDate.until(now, ChronoUnit.SECONDS));
-            }
+            final long time = isCountdown ? now.until(otherDate, ChronoUnit.SECONDS) : otherDate.until(now, ChronoUnit.SECONDS);
+            return formatTime ? this.formatTimeInSeconds(time) : String.valueOf(time);
         } catch (DateTimeParseException e) {
             final String type = isCountdown ? "countdown" : "count-up";
             Logging.error(e, "Could not calculate {0} (format: \"{1}\", other date: \"{2}\")", type, formatter.toString(), otherDateString);
             return "invalid date";
         }
+    }
+
+    public @NotNull String calculateTimeBetweenWithoutFormat(
+        @Nullable final OfflinePlayer player, @NotNull final String args,
+        final boolean isCountdown
+    ) {
+        return calculateTimeBetween(player, args, isCountdown, false);
     }
 
 }

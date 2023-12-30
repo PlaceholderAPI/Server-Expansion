@@ -219,14 +219,24 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
             return timeFormatter.formatTime(params.replace("time_", ""));
         }
 
+        // countdown_raw_<date> or countdown_raw_<custom format>_<date>
+        if (params.startsWith("countdown_raw_")) {
+            return timeFormatter.calculateTimeBetweenWithoutFormat(player, params.replace("countdown_raw_", ""), true);
+        }
+
         // countdown_<date> or countdown_<custom format>_<date>
         if (params.startsWith("countdown_")) {
-            return timeFormatter.calculateTimeBetween(player, params.replace("countdown_", ""), true);
+            return timeFormatter.calculateTimeBetween(player, params.replace("countdown_", ""), true, true);
+        }
+
+        // countup_raw_<date> or countup_raw_<custom format>_<date>
+        if (params.startsWith("countup_raw_")) {
+            return timeFormatter.calculateTimeBetweenWithoutFormat(player, params.replace("countup_raw_", ""), false);
         }
 
         // countup_<date> or countup_<custom format>_<date>
         if (params.startsWith("countup_")) {
-            return timeFormatter.calculateTimeBetween(player, params.replace("countup_", ""), false);
+            return timeFormatter.calculateTimeBetween(player, params.replace("countup_", ""), false, true);
         }
 
         return null;
