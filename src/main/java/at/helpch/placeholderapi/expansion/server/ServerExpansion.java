@@ -204,6 +204,15 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
                 return tpsFormatter.getTps(null);
             case "uptime":
                 return timeFormatter.formatTimeInSeconds(TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime()));
+            case "uptime_full":
+                long uptimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(ManagementFactory.getRuntimeMXBean().getUptime());
+                long days = TimeUnit.SECONDS.toDays(uptimeInSeconds);
+                uptimeInSeconds -= TimeUnit.DAYS.toSeconds(days);
+                long hours = TimeUnit.SECONDS.toHours(uptimeInSeconds);
+                uptimeInSeconds -= TimeUnit.HOURS.toSeconds(hours);
+                long minutes = TimeUnit.SECONDS.toMinutes(uptimeInSeconds);
+                uptimeInSeconds -= TimeUnit.MINUTES.toSeconds(minutes);
+                return String.format("%dd %dh %dm %ds", days, hours, minutes, uptimeInSeconds);
             case "total_chunks":
                 return getFromCache("chunks", () -> getFromAllWorlds(world -> world.getLoadedChunks().length));
             case "total_living_entities":
