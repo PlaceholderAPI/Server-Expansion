@@ -216,7 +216,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
 
         // tps_<type>
         if (params.startsWith("tps_")) {
-            return tpsFormatter.getTps(params.substring("tps_".length()));
+            return tpsFormatter.getTps(params.substring("tps_".length())).replace("*", "");
         }
 
         // online_<world name>
