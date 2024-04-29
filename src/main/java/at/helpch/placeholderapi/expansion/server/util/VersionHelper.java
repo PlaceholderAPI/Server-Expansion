@@ -25,10 +25,8 @@ package at.helpch.placeholderapi.expansion.server.util;
 
 import com.google.common.primitives.Ints;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +35,7 @@ import java.util.regex.Pattern;
  */
 public final class VersionHelper {
 
-    public static final String NMS_VERSION = getNmsVersion();
+    private static final String CRAFTBUKKIT_PACKAGE = Bukkit.getServer().getClass().getPackage().getName();
 
     private static final int V1_17 = 1_17_0;
 
@@ -45,6 +43,7 @@ public final class VersionHelper {
 
     private static final boolean IS_PAPER = checkPaper();
 
+    public static final String MINECRAFT_VERSION = getMinecraftVersion();
     public static final boolean IS_1_17_OR_HIGHER = CURRENT_VERSION >= V1_17;
 
     /**
@@ -73,7 +72,7 @@ public final class VersionHelper {
      */
     private static int getCurrentVersion() {
         // No need to cache since will only run once
-        final Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+)(?<patch>\\.\\d+)?").matcher(Bukkit.getBukkitVersion());
+        final Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+)(?<patch>\\.\\d+)?").matcher(MINECRAFT_VERSION);
 
         final StringBuilder stringBuilder = new StringBuilder();
         if (matcher.find()) {
@@ -92,13 +91,23 @@ public final class VersionHelper {
         return version;
     }
 
-    private static String getNmsVersion() {
+    private static String getMinecraftVersion() {
+        try {
+            // Paper method from 2020 - returns the version like 1.20.1
+            return Bukkit.getMinecraftVersion();
+        } catch (NoSuchMethodError ignored) {
+            // The version is formatted as 1.20.1-R0.1-SNAPSHOT
+            return Bukkit.getBukkitVersion().split("-")[0];
+        }
+    }
+
+    public static String getNmsVersion() {
         final String version = Bukkit.getServer().getClass().getPackage().getName();
         return version.substring(version.lastIndexOf('.') + 1);
     }
 
     public static Class<?> craftClass(@NotNull final String name) throws ClassNotFoundException {
-        return Class.forName("org.bukkit.craftbukkit." + NMS_VERSION + "." + name);
+        return Class.forName(CRAFTBUKKIT_PACKAGE + "." + name);
     }
 
 }
