@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "at.helpch.placeholderapi.expansion"
-version = "2.7.0"
+version = "2.7.1"
 
 repositories {
     maven("https://papermc.io/repo/repository/maven-public/")
