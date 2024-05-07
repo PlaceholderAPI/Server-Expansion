@@ -43,9 +43,9 @@ public final class VersionHelper {
 
     private static final boolean IS_PAPER = checkPaper();
 
-    public static final String MINECRAFT_VERSION = getMinecraftVersion();
     public static final boolean IS_1_17_OR_HIGHER = CURRENT_VERSION >= V1_17;
 
+    private static String minecraftVersionCache = null;
     /**
      * Check if the server has access to the Paper API
      * Taken from <a href="https://github.com/PaperMC/PaperLib">PaperLib</a>
@@ -72,7 +72,7 @@ public final class VersionHelper {
      */
     private static int getCurrentVersion() {
         // No need to cache since will only run once
-        final Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+)(?<patch>\\.\\d+)?").matcher(MINECRAFT_VERSION);
+        final Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+)(?<patch>\\.\\d+)?").matcher(getMinecraftVersion());
 
         final StringBuilder stringBuilder = new StringBuilder();
         if (matcher.find()) {
@@ -91,14 +91,18 @@ public final class VersionHelper {
         return version;
     }
 
-    private static String getMinecraftVersion() {
+    public static String getMinecraftVersion() {
+        if (minecraftVersionCache != null) {
+            return minecraftVersionCache;
+        }
         try {
             // Paper method from 2020 - returns the version like 1.20.1
-            return Bukkit.getMinecraftVersion();
+            minecraftVersionCache = Bukkit.getMinecraftVersion();
         } catch (NoSuchMethodError ignored) {
             // The version is formatted as 1.20.1-R0.1-SNAPSHOT
-            return Bukkit.getBukkitVersion().split("-")[0];
+            minecraftVersionCache = Bukkit.getBukkitVersion().split("-")[0];
         }
+        return minecraftVersionCache;
     }
 
     public static String getNmsVersion() {

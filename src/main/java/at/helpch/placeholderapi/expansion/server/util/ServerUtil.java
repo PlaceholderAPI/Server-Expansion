@@ -130,7 +130,7 @@ public final class ServerUtil {
     }
 
     public static String getServerVersion() {
-        return VersionHelper.MINECRAFT_VERSION;
+        return VersionHelper.getMinecraftVersion();
     }
 
     public static String getBuild() {
