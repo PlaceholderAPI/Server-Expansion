@@ -186,7 +186,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
                 return ServerUtil.getBuild();
             case "version_build":
             case "version_full":
-                return Bukkit.getBukkitVersion();
+                return ServerUtil.getServerVersion() + '-' + ServerUtil.getBuild();
             // -----
 
             // ----- RAM placeholders
