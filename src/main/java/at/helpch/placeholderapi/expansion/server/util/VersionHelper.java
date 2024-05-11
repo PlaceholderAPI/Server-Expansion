@@ -39,11 +39,11 @@ public final class VersionHelper {
 
     private static final int V1_17 = 1_17_0;
 
+    public static final String MINECRAFT_VERSION = getMinecraftVersion();
     private static final int CURRENT_VERSION = getCurrentVersion();
 
     private static final boolean IS_PAPER = checkPaper();
 
-    public static final String MINECRAFT_VERSION = getMinecraftVersion();
     public static final boolean IS_1_17_OR_HIGHER = CURRENT_VERSION >= V1_17;
 
     /**
