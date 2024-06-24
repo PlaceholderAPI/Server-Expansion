@@ -1,10 +1,12 @@
 package at.helpch.placeholderapi.expansion.server.util;
 
+import io.papermc.paper.ServerBuildInfo;
 import org.bukkit.Bukkit;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.TreeMap;
 
 public final class ServerUtil {
@@ -32,6 +34,9 @@ public final class ServerUtil {
     }
 
     private static String findVariant() {
+        if (hasServerBuildInfo())
+            return getVariant0();
+
         for (final Map.Entry<String, String> entry : variants.entrySet()) {
             try {
                     Class.forName(entry.getKey());
@@ -97,6 +102,9 @@ public final class ServerUtil {
     }
 
     private static String findBuild() {
+        if (hasServerBuildInfo())
+            return getBuild0();
+
         String[] buildParts = Bukkit.getVersion().split("-");
 
         switch (getVariant().toLowerCase()) {
@@ -153,4 +161,25 @@ public final class ServerUtil {
         }
     }
 
+    // Available since recent 1.20.6 versions of Paper. Allows easier retrieval of certain info.
+    private static boolean hasServerBuildInfo() {
+        try {
+            Class.forName("io.papermc.paper.ServerBuildInfo");
+            return true;
+        } catch(ClassNotFoundException ignored) {
+            return false;
+        }
+    }
+
+    private static String getVariant0() {
+        return ServerBuildInfo.buildInfo().brandName();
+    }
+
+    private static String getBuild0() {
+        OptionalInt buildNumber = ServerBuildInfo.buildInfo().buildNumber();
+        if (buildNumber.isEmpty())
+            return "Unknown";
+
+        return String.valueOf(buildNumber.getAsInt());
+    }
 }
