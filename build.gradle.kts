@@ -17,6 +17,13 @@ dependencies {
 }
 
 tasks {
+    jar {
+        manifest {
+            attributes["Implementation-Title"] = "server"
+            attributes["Implementation-Version"] = project.version
+        }
+    }
+
     shadowJar {
         archiveFileName.set("PAPI-Expansion-Server-${project.version}.jar")
     }
