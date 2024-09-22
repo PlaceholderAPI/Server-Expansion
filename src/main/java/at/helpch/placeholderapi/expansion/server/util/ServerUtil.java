@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.TreeMap;
@@ -12,13 +13,15 @@ import java.util.TreeMap;
 public final class ServerUtil {
 
     private static final Map<String, String> variants = new TreeMap<>();
-    private static final String variant;
-    private static final String build;
 
     // TPS stuff
     private static final Object craftServer;
     private static final Field tpsField;
-    private static boolean hasTpsMethod; // Paper and its forks have Bukkit#getTps
+    private static Method getTpsMethod; // Paper and its forks have Bukkit#getTPS
+    // ----
+
+    private static final String variant;
+    private static final String build;
 
     static {
         variants.put("net.pl3x.purpur.PurpurConfig", "Purpur");
@@ -83,8 +86,7 @@ public final class ServerUtil {
 
     private static Field getTpsHandler() {
         try {
-            Bukkit.class.getMethod("getTPS");
-            hasTpsMethod = true;
+            getTpsMethod = Bukkit.class.getMethod("getTPS");
             return null;
         } catch (NoSuchMethodException ignored) { }
 
@@ -146,8 +148,12 @@ public final class ServerUtil {
     }
 
     public static double[] getTps() {
-        if (hasTpsMethod) {
-            return Bukkit.getTPS();
+        if (getTpsMethod != null) {
+            try {
+                return (double[]) getTpsMethod.invoke(null);
+            } catch (IllegalAccessException | InvocationTargetException ignored) {
+                return new double[]{0, 0, 0};
+            }
         }
 
         if (craftServer == null || tpsField == null) {
