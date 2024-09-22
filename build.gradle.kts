@@ -18,7 +18,11 @@ dependencies {
 }
 
 tasks {
-    java {
+    jar {
+        manifest {
+            attributes["Implementation-Title"] = "server"
+            attributes["Implementation-Version"] = project.version
+        }
         targetCompatibility = JavaVersion.VERSION_1_8
         sourceCompatibility = JavaVersion.VERSION_1_8
     }

@@ -63,7 +63,7 @@ public final class ServerExpansion extends PlaceholderExpansion implements Cache
 
     @Override
     public @NotNull String getVersion() {
-        return "2.7.2";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
