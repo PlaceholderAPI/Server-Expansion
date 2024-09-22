@@ -27,6 +27,8 @@ import com.google.common.primitives.Ints;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,10 +41,9 @@ public final class VersionHelper {
 
     private static final int V1_17 = 1_17_0;
 
+    private static final boolean IS_PAPER = checkPaper();
     public static final String MINECRAFT_VERSION = getMinecraftVersion();
     private static final int CURRENT_VERSION = getCurrentVersion();
-
-    private static final boolean IS_PAPER = checkPaper();
 
     public static final boolean IS_1_17_OR_HIGHER = CURRENT_VERSION >= V1_17;
 
@@ -92,13 +93,16 @@ public final class VersionHelper {
     }
 
     private static String getMinecraftVersion() {
-        try {
-            // Paper method from 2020 - returns the version like 1.20.1
-            return Bukkit.getMinecraftVersion();
-        } catch (NoSuchMethodError ignored) {
-            // The version is formatted as 1.20.1-R0.1-SNAPSHOT
-            return Bukkit.getBukkitVersion().split("-")[0];
+        if (IS_PAPER) {
+            try {
+                // Paper method from 2020 - returns the version like 1.20.1
+                final Method method = Bukkit.class.getDeclaredMethod("getMinecraftVersion");
+                return (String) method.invoke(Bukkit.getServer());
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) { }
         }
+
+        // The version is formatted as 1.20.1-R0.1-SNAPSHOT
+        return Bukkit.getBukkitVersion().split("-")[0];
     }
 
     public static String getNmsVersion() {

@@ -6,6 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -46,9 +47,16 @@ public final class TimeFormatter {
             try {
                 return DateTimeFormatter.ofPattern(pattern, timeLocale);
             } catch (IllegalArgumentException e) {
-                Logging.warn("Could not parse DateTimeFormatter from string \"{0}\"", pattern);
-                return null;
+                Logging.error(e, "Could not parse DateTimeFormatter from pattern \"{0}\"", pattern);
+            } catch (DateTimeException e) {
+                if (e.getMessage().contains("obtain LocalTime from TemporalAccessor")) {
+                    Logging.error(e, "The pattern \"{0}\" might be missing the time definition, try to add 'HH' at the end and set it to '00' (beginning of the day)", pattern);
+                } else {
+                    Logging.error(e, "Could not parse DateTimeFormatter from pattern \"{0}\"", pattern);
+                }
             }
+
+            return null;
         });
     }
 
