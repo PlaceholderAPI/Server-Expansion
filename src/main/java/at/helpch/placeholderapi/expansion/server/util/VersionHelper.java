@@ -96,9 +96,11 @@ public final class VersionHelper {
         if (IS_PAPER) {
             try {
                 // Paper method from 2020 - returns the version like 1.20.1
-                final Method method = Bukkit.class.getDeclaredMethod("getMinecraftVersion");
-                return (String) method.invoke(Bukkit.getServer());
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) { }
+                return Bukkit.getMinecraftVersion();
+            } catch (NoSuchMethodError ignored) {
+                // The version is formatted as 1.20.1-R0.1-SNAPSHOT
+                return Bukkit.getBukkitVersion().split("-")[0];
+            }
         }
 
         // The version is formatted as 1.20.1-R0.1-SNAPSHOT

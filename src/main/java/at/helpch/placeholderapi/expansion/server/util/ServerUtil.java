@@ -17,7 +17,7 @@ public final class ServerUtil {
     // TPS stuff
     private static final Object craftServer;
     private static final Field tpsField;
-    private static Method getTpsMethod; // Paper and its forks have Bukkit#getTPS
+    private static boolean hasTpsMethod; // Paper and its forks have Bukkit#getTps
     // ----
 
     private static final String variant;
@@ -86,7 +86,8 @@ public final class ServerUtil {
 
     private static Field getTpsHandler() {
         try {
-            getTpsMethod = Bukkit.class.getMethod("getTPS");
+            Bukkit.class.getMethod("getTPS");
+            hasTpsMethod = true;
             return null;
         } catch (NoSuchMethodException ignored) { }
 
@@ -148,12 +149,8 @@ public final class ServerUtil {
     }
 
     public static double[] getTps() {
-        if (getTpsMethod != null) {
-            try {
-                return (double[]) getTpsMethod.invoke(null);
-            } catch (IllegalAccessException | InvocationTargetException ignored) {
-                return new double[]{0, 0, 0};
-            }
+        if (hasTpsMethod) {
+            return Bukkit.getTPS();
         }
 
         if (craftServer == null || tpsField == null) {
@@ -183,8 +180,9 @@ public final class ServerUtil {
 
     private static String getBuild0() {
         OptionalInt buildNumber = ServerBuildInfo.buildInfo().buildNumber();
-        if (buildNumber.isEmpty())
+        if (!buildNumber.isPresent()) {
             return "Unknown";
+        }
 
         return String.valueOf(buildNumber.getAsInt());
     }
