@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.DateTimeException;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -64,7 +64,7 @@ public final class TimeFormatter {
      * Format the current time with the given format
      *
      * @param format format
-     * @return {@code null} if the format is empty or invalid, otherwise {@link LocalDateTime#now(ZoneId)} formatted
+     * @return {@code null} if the format is empty or invalid, otherwise {@link ZonedDateTime#now(ZoneId)} formatted
      */
     public @Nullable String formatTime(@NotNull final String format) {
         if (format.trim().isEmpty()) {
@@ -72,7 +72,7 @@ public final class TimeFormatter {
         }
 
         return Optional.ofNullable(parseFormat(format))
-            .map(formatter -> LocalDateTime.now(timeZone).format(formatter))
+            .map(formatter -> ZonedDateTime.now(timeZone).format(formatter))
             .orElse(null);
     }
 
@@ -110,7 +110,7 @@ public final class TimeFormatter {
     }
 
     /**
-     * Calculate the time between {@link LocalDateTime#now(ZoneId)} and another date and return a formatted value
+     * Calculate the time between {@link ZonedDateTime#now(ZoneId)} and another date and return a formatted value
      * using {@link #formatTimeInSeconds(long)} if {@code formatTime} is {@code true}.
      *
      * @param player      player
@@ -145,9 +145,11 @@ public final class TimeFormatter {
             return "invalid date format";
         }
 
+        DateTimeFormatter zonedFormatter = formatter.withZone(timeZone);
+
         try {
-            LocalDateTime now = LocalDateTime.now(timeZone);
-            LocalDateTime otherDate = LocalDateTime.parse(otherDateString, formatter);
+            ZonedDateTime now = ZonedDateTime.now(timeZone);
+            ZonedDateTime otherDate = ZonedDateTime.parse(otherDateString, zonedFormatter);
 
             if (otherDate.isEqual(now)) {
                 return "0";
@@ -162,7 +164,7 @@ public final class TimeFormatter {
             return formatTime ? this.formatTimeInSeconds(time) : String.valueOf(time);
         } catch (DateTimeParseException e) {
             final String type = isCountdown ? "countdown" : "count-up";
-            Logging.error(e, "Could not calculate {0} (format: \"{1}\", other date: \"{2}\")", type, formatter.toString(), otherDateString);
+            Logging.error(e, "Could not calculate {0} (format: \"{1}\", other date: \"{2}\")", type, zonedFormatter.toString(), otherDateString);
             return "invalid date";
         }
     }
