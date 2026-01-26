@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+}
+
+group = 'at.helpch.papi.expansion.server'
+version = '1.0.0'
+description = 'PlaceholderAPI expansion for Hytale server placeholders'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+
+    maven {
+        url = uri("https://repo.codemc.io/repository/hytale/")
+    }
+
+    maven {
+        url = uri("https://repo.helpch.at/releases")
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+}
+
+
+dependencies {
+    compileOnly("com.hypixel.hytale:Server:2026.01.17-4b0f30090")
+    compileOnly("at.helpch:placeholderapi-hytale:1.0.0")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar') {
+    archiveBaseName.set('PAPI-Expansion-HyServer')
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version
+        )
+    }
+}
