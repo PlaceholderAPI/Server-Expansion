@@ -164,7 +164,6 @@ nbdist/
 nbactions.xml
 
 ### Piggy's Debugging Shit ###
-server/
 gradlew.bat
 gradlew
 gradle/wrapper/gradle-wrapper.jar
