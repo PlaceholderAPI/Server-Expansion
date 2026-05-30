@@ -21,7 +21,7 @@ public final class ServerExpansion extends PlaceholderExpansion {
   }
   
   public String getVersion() {
-    return "1.0.0";
+    return "1.0.1";
   }
   
   public String onPlaceholderRequest(PlayerRef player, String identifier) {
