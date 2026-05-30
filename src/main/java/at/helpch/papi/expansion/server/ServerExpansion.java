@@ -13,7 +13,7 @@ import com.hypixel.hytale.server.core.HytaleServerConfig;
 
 public final class ServerExpansion extends PlaceholderExpansion {
   public String getIdentifier() {
-    return "hyServer";
+    return "Server";
   }
   
   public String getAuthor() {
